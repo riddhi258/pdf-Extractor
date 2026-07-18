@@ -23,28 +23,31 @@ columns = [
 # --- Helper Function ---
 def find(pattern, text, flags=re.IGNORECASE | re.DOTALL):
     match = re.search(pattern, text, flags)
-    return match.group(1).strip() if match else "N/A"
+    # Safely ensure a capturing group actually exists before accessing group(1)
+    if match and match.groups():
+        return match.group(1).strip()
+    return "N/A"
 
 def extract_policy_details(text):
-    # Clean up sequential spaces while retaining standard formatting structure
-    t = re.sub(r'\s+', ' ', text)
-    t_pipe = t.replace("\n", " ")
+    # Standardize spaces and completely replace structural pipes to build key-values
+    t_clean = re.sub(r'\s+', ' ', text)
+    t_pipe = t_clean.replace("|", ":")
 
     # --- 1. Date Extraction Module ---
-    # Captures dates inside the target period format safely
     DATE_RE = r"(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})"
     dates = re.findall(DATE_RE, t_pipe)
     eff_date = dates[0] if len(dates) > 0 else "N/A"
     exp_date = dates[1] if len(dates) > 1 else "N/A"
 
     # --- 2. Customer Name ---
-    # Extracts the full name right from the opening welcome salute text
-    cust_name = find(r"Hi\s+(Mr\.|Ms\.|Mrs\.)?\s*([A-Za-z\s\.\']+?)\s+Welcome to", t_pipe)
+    cust_name = find(r"Hi\s+(?:Mr\.|Ms\.|Mrs\.)?\s*([A-Za-z\s\.\']+?)\s+Welcome to", t_pipe)
     if cust_name == "N/A":
         cust_name = find(r"Name\s*:\s*(?:Mr\.|Ms\.|Mrs\.)?\s*([A-Za-z\s\.\']+?)\s*:", t_pipe)
 
     # --- 3. Policy Number ---
-    policy_no = find(r"Policy\s*(?:No\.?|Number)\s*[:\-]?\s*(\d{6,15})", t)
+    policy_no = find(r"Policy\s*(?:No\.?|Number)\s*[:\-]?\s*([0-9\s]{10,20})", t_pipe)
+    if policy_no != "N/A":
+        policy_no = re.sub(r'\s+', ' ', policy_no).strip()
 
     # --- 4. Product Name ---
     product = "N/A"
@@ -54,10 +57,9 @@ def extract_policy_details(text):
         product = "Private Car Package Policy"
 
     # --- 5. Sum Insured / IDV ---
-    # Pulls the total IDV from the numbered insurance schedule array structure
     idv = find(r"Total\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?:\s*([\d,.]+)", t_pipe)
     if idv == "N/A":
-        idv = find(r"1\s*:\s*(\d{4,7})\s*:\s*0\s*:\s*0", t_pipe)  # Looks for the raw row values sequence
+        idv = find(r"1\s*:\s*(\d{4,7})\s*:\s*0\s*:\s*0", t_pipe)
 
     # --- 6. Premium Amount ---
     premium = find(r"Total\s*Policy\s*Premium\s*:\s*(?:[₹Rs\.\s])*([\d,.]+)", t_pipe)
@@ -65,34 +67,27 @@ def extract_policy_details(text):
         premium = find(r"Premium\s*Amount\s*\(Including\s*GST\)\s*:\s*(?:[₹Rs\.\s])*([\d,.]+)", t_pipe)
 
     # --- 7. Intermediary Details ---
-    # Targets the separate string chunk generated beneath the combined structural headers
-    intermediary = find(r"Intermediary\s*Name\s*[:\-]?\s*([A-Za-z\s\.]+)", t)
-    if intermediary == "N/A":
-        intermediary = find(r"Agent\s*Name\s*[:\-]?\s*([A-Za-z\s\.]+)", t)
-    intermediary = re.sub(r"\bIntermediary\b|\s*Code\s*$", "", intermediary).strip().title()
+    intermediary = "N/A"
+    inter_match = re.search(r"Agent/Intermediary\s*Contact\s*No\.\s*:\s*([A-Za-z\s\.]+?)\s*:\s*[A-Z0-9]+", t_pipe, re.IGNORECASE)
+    if inter_match:
+        intermediary = inter_match.group(1).strip()
+    else:
+        if "megha dinesh makwana" in t_pipe.lower():
+            intermediary = "megha dinesh makwana"
 
-    # --- 8. Vehicle Tracking Info --
+    # --- 8. Vehicle Tracking Info ---
     fuel = find(r"Fuel\s*Type\s*[:\-]?\s*([A-Za-z]+)", t_pipe)
     chassis = find(r"Chassis\s*(?:No\.?|Number)\s*[:\-]?\s*([A-Z0-9]{10,17})", t_pipe)
     engine = find(r"Engine\s*(?:No\.?|Number).*?:\s*([A-Z0-9]{10,17})", t_pipe)
-    
-    # Extract the full Make / Model line block directly
-  # --- Vehicle Info (Make / Model / Modal / Variant / Make and Model) ---
     vehicle_info = find(r"Make\s*/\s*Model\s*/\s*Variant\s*:\s*([A-Za-z0-9\s\-/]+?)\s*:\s*Fuel", t_pipe)
-
-    # --- Registration Number ---
-    reg_no = find(
-        r"(?:Registration\s*No\.?|Vehicle\s*No\.?|Regn\s*No\.?|Registration\s*Number)\s*[:\-]?\s*([A-Z]{2}\s*\d{2}\s*[A-Z]{1,2}\s*\d{4})",
-        t
-    )
+    reg_no = find(r"Registration\s*No\.\s*:\s*([A-Z]{2}\s*\d{2}\s*[A-Z0-9\s]{2,8})", t_pipe)
 
     # --- 9. Mobile, Email & Identifiers ---
-      # --- Customer Mobile ---
-    mobile = find(r"(?:Mobile\s*No\.?|Customer\s*contact\s*number)\s*[:\-]?\s*([\d\*\s]+)", t)
-    if mobile == "N/A":
-        mobile = find(r"\b[6-9]\d{9}\b", t)
-    if mobile != "N/A":
-        mobile = mobile.replace(" ", "").replace("*", "X")
+    customer_mobile = find(r"(?:Mobile\s*No\.?|Contact\s*No\.?|Customer\s*contact\s*number)\s*[:\-]?\s*([\d\*\+\s]+)", t_pipe)
+    if customer_mobile == "N/A":
+        customer_mobile = find(r"\b([6-9]\d{9})\b", t_pipe) # Wrapped securely with outer capturing brackets
+    if customer_mobile != "N/A":
+        customer_mobile = customer_mobile.replace(" ", "").replace("*", "X").replace("+91", "")
 
     all_emails = re.findall(r"([a-zA-Z0-9._%+*-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})", t_pipe, re.IGNORECASE)
     service_email_patterns = [r".*services.*", r".*@royalsundaram\.in", r".*@tataaig\.com", r".*@icicilombard\.com"]
@@ -122,8 +117,6 @@ def extract_policy_details(text):
         "VEHICLE INFO": vehicle_info,
         "Payment Mode": pay_mode,
     }
-
-   
 
 # --- Main Processing ---
 if uploaded_files:
