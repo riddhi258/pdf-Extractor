@@ -74,6 +74,7 @@ def extract_policy_details(text, file_name):
         product = find(r"(?:Product\s*Name|Policy\s*Type|Cover\s*Type)\s*[:\-]?\s*([A-Za-z\s\-\(\)\/]+)", t)
     if product == "N/A" and "private car" in t.lower():
         product = "Private Car Package Policy"
+    else: product = find(r"(?:Product\s*Name|Policy\s*Type|Cover\s*Type)\s*[:\-]?\s*([A-Za-z\s]+)", t)
 
     # --- Sum Insured / IDV ---
          # --- Sum Insured / IDV ---
