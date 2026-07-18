@@ -66,13 +66,10 @@ def extract_policy_details(text):
 
     # --- 7. Intermediary Details ---
     # Targets the separate string chunk generated beneath the combined structural headers
-    intermediary = "N/A"
-    inter_match = re.search(r"Agent/Intermediary\s*Contact\s*No\..*?\|\s*([A-Za-z\s\.]+?)\s*\|\s*[A-Z0-9]+", t)
-    if inter_match:
-        intermediary = inter_match.group(1).strip()
-    else:
-        # Fallback tracking if pipe structures are stripped out early
-        intermediary = find(r"Agent/Intermediary\s*Contact\s*No\.\s*:\s*([A-Za-z\s\.]+?)\s*:\s*[A-Z0-9]+", t_pipe)
+    intermediary = find(r"Intermediary\s*Name\s*[:\-]?\s*([A-Za-z\s\.]+)", t)
+    if intermediary == "N/A":
+        intermediary = find(r"Agent\s*Name\s*[:\-]?\s*([A-Za-z\s\.]+)", t)
+    intermediary = re.sub(r"\bIntermediary\b|\s*Code\s*$", "", intermediary).strip().title()
 
     # --- 8. Vehicle Tracking Info --
     fuel = find(r"Fuel\s*Type\s*[:\-]?\s*([A-Za-z]+)", t_pipe)
