@@ -1,10 +1,3 @@
-Yes, exactly! **Vehicle IDV** and **Total IDV** both mean **IDV** (Insured Declared Value). It is the exact column value you want for your "Sum Insured / IDV" field.
-
-To make sure your Streamlit app successfully pulls the vehicle info, engine number, and the correct multi-digit IDV amount (instead of getting stuck on `1`), here is the complete, updated script.
-
-Replace your entire file with this clean version:
-
-```python
 import streamlit as st
 import pandas as pd
 import re
@@ -200,4 +193,3 @@ if uploaded_files:
 st.markdown("---")
 st.caption("Built with 💙 Streamlit + PyPDF2 + Regex Extraction | Supports Tata AIG, Royal Sundaram, ICICI Lombard & more")
 
-```
