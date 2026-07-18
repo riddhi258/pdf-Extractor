@@ -1,3 +1,10 @@
+Yes, exactly! **Vehicle IDV** and **Total IDV** both mean **IDV** (Insured Declared Value). It is the exact column value you want for your "Sum Insured / IDV" field.
+
+To make sure your Streamlit app successfully pulls the vehicle info, engine number, and the correct multi-digit IDV amount (instead of getting stuck on `1`), here is the complete, updated script.
+
+Replace your entire file with this clean version:
+
+```python
 import streamlit as st
 import pandas as pd
 import re
@@ -8,6 +15,11 @@ from PyPDF2 import PdfReader
 st.set_page_config(page_title="PDF to Excel - Policy Extractor", layout="centered")
 st.title("📄 PDF Policy Extractor → Excel")
 st.write("Upload one or more insurance policy PDFs (Tata AIG, Royal Sundaram, ICICI Lombard, etc.) to extract key details into a structured Excel file.")
+
+# --- Sidebar Configuration ---
+st.sidebar.title("🏢 Choose Insurance Company")
+company = st.sidebar.selectbox("Select the Company", ["Tata AIG", "Royal Sundaram", "ICICI Lombard", "Other"])
+st.sidebar.info(f"👉 Selected: {company}")
 
 # --- File Upload ---
 uploaded_files = st.file_uploader("Upload Policy PDFs", type=["pdf"], accept_multiple_files=True)
@@ -23,7 +35,6 @@ columns = [
 # --- Helper Function ---
 def find(pattern, text, flags=re.IGNORECASE | re.DOTALL):
     match = re.search(pattern, text, flags)
-    # Safely ensure a capturing group actually exists before accessing group(1)
     if match and match.groups():
         return match.group(1).strip()
     return "N/A"
@@ -56,28 +67,22 @@ def extract_policy_details(text):
     elif "Private Car" in t_pipe:
         product = "Private Car Package Policy"
 
-    # --- 5. Sum Insured / IDV (Looking for vehicle IDV / Total IDV) ---
-    # --- 5. Sum Insured / IDV (Refined to avoid single-digit noise) ---
+    # --- 5. Sum Insured / IDV (Refined to avoid single-digit noise like '1') ---
     idv = "N/A"
-    
-    # 1. Look for explicit Total IDV labels followed by a realistic amount (at least 4 digits)
     idv_match = re.search(r"Total\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?[:\-]?\s*([\d,]{4,7}(?:\.\d{2})?)", t_pipe, re.IGNORECASE)
     if idv_match:
         idv = idv_match.group(1).strip()
         
-    # 2. Look for Vehicle IDV labels followed by a realistic amount
     if idv == "N/A":
         idv_match = re.search(r"Vehicle\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?[:\-]?\s*([\d,]{4,7}(?:\.\d{2})?)", t_pipe, re.IGNORECASE)
         if idv_match:
             idv = idv_match.group(1).strip()
 
-    # 3. Table structural row signature fallback (captures the 4-7 digit value, ignoring the index '1')
     if idv == "N/A":
         idv_match = re.search(r"\b1\s*:\s*(\d{4,7})\s*:\s*0\s*:\s*0", t_pipe)
         if idv_match:
             idv = idv_match.group(1).strip()
 
-    # 4. Trailing block sequence fallback (ensures the value caught has at least 4 digits)
     if idv == "N/A":
         idv_match = re.search(r"(?:Package Policy|Two-Whee\w*|Motor\s*Cycle)[^\d]*([\d,]{4,7})", t_pipe, re.IGNORECASE)
         if idv_match:
@@ -106,7 +111,7 @@ def extract_policy_details(text):
     fuel = find(r"Fuel\s*Type\s*[:\-]?\s*([A-Za-z]+)", t_pipe)
     chassis = find(r"Chassis\s*(?:No\.?|Number)\s*[:\-]?\s*([A-Z0-9]{10,17})", t_pipe)
     
-    # Engine Number / Motor No
+    # Engine Number / Motor No Extraction
     engine = find(r"Engine\s*No\.\s*/\s*Motor\s*No\.\s*\(For\s*EV\)\s*[:\-]?\s*([A-Z0-9]{10,17})", t_pipe)
     if engine == "N/A":
         engine = find(r"Engine\s*(?:No\.?|Number).*?:\s*([A-Z0-9]{10,17})", t_pipe)
@@ -115,7 +120,7 @@ def extract_policy_details(text):
         if engine_match:
             engine = engine_match.group(1).strip()
 
-    # Vehicle Info (Checking Body Type, Make/Model, or Motorcycle tags)
+    # Vehicle Info (Body Type fallback rule included)
     vehicle_info = find(r"Body\s*Type\s*[:\-]?\s*([A-Za-z0-9\s\-/]+?)(?=\s*(?:Total|Fuel|Online|\d{2}/))", t_pipe)
     if vehicle_info == "N/A":
         vehicle_info = find(r"Make\s*/\s*Model\s*/\s*Variant\s*:\s*([A-Za-z0-9\s\-/]+?)\s*:\s*Fuel", t_pipe)
@@ -195,3 +200,4 @@ if uploaded_files:
 st.markdown("---")
 st.caption("Built with 💙 Streamlit + PyPDF2 + Regex Extraction | Supports Tata AIG, Royal Sundaram, ICICI Lombard & more")
 
+```
