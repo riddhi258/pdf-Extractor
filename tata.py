@@ -29,7 +29,7 @@ def find(pattern, text, flags=re.IGNORECASE | re.DOTALL):
     return "N/A"
 
 def extract_policy_details(text):
-    # Standardize spaces and completely replace structural pipes to build key-values
+    # Standardize spaces and handle line formatting
     t_clean = re.sub(r'\s+', ' ', text)
     t_pipe = t_clean.replace("|", ":")
 
@@ -56,12 +56,12 @@ def extract_policy_details(text):
     elif "Private Car" in t_pipe:
         product = "Private Car Package Policy"
 
-    # --- 5. Sum Insured / IDV (Updated Fallbacks) ---
-    idv = find(r"Total\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?:\s*([\d,.]+)", t_pipe)
+    # --- 5. Sum Insured / IDV (Targeting exact label anchor) ---
+    idv = find(r"Total\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?[:\-]?\s*([\d,.]+)", t_pipe)
     if idv == "N/A":
         idv = find(r"1\s*:\s*(\d{4,7})\s*:\s*0\s*:\s*0", t_pipe)
     if idv == "N/A":
-        # Capture numeric IDV following the policy types pattern
+        # Positional alignment fallback using your exact document text structure
         idv_match = re.search(r"(?:Package Policy|Two-Whee\w*)\s*(?:N/A\s*)?([\d,]{4,7})", t_pipe)
         if idv_match:
             idv = idv_match.group(1).strip()
@@ -85,22 +85,26 @@ def extract_policy_details(text):
         if "megha dinesh makwana" in t_pipe.lower() or "megha din" in t_pipe.lower():
             intermediary = "Megha Dinesh Makwana"
 
-    # --- 8. Vehicle Tracking Info (Updated Engine/Vehicle Fallbacks) ---
+    # --- 8. Vehicle Tracking Info ---
     fuel = find(r"Fuel\s*Type\s*[:\-]?\s*([A-Za-z]+)", t_pipe)
     chassis = find(r"Chassis\s*(?:No\.?|Number)\s*[:\-]?\s*([A-Z0-9]{10,17})", t_pipe)
     
-    # Engine Number extraction
-    engine = find(r"Engine\s*(?:No\.?|Number).*?:\s*([A-Z0-9]{10,17})", t_pipe)
+    # Engine Number/Motor No (Targeting your exact label string signature)
+    engine = find(r"Engine\s*No\.\s*/\s*Motor\s*No\.\s*\(For\s*EV\)\s*[:\-]?\s*([A-Z0-9]{10,17})", t_pipe)
     if engine == "N/A":
-        # Look for engine signatures (typically alphanumeric code) adjacent to the Chassis/VIN string block
+        engine = find(r"Engine\s*(?:No\.?|Number).*?:\s*([A-Z0-9]{10,17})", t_pipe)
+    if engine == "N/A":
+        # Fallback tracking using the structural block parsing signature adjacent to Registration values
         engine_match = re.search(r"([A-Z0-9]{10,17})\s+[A-Z]{2}\s*\d{2}\s*[A-Z]", t_pipe)
         if engine_match:
             engine = engine_match.group(1).strip()
 
-    # Vehicle Info / Make Model extraction
-    vehicle_info = find(r"Make\s*/\s*Model\s*/\s*Variant\s*:\s*([A-Za-z0-9\s\-/]+?)\s*:\s*Fuel", t_pipe)
+    # Vehicle Info / Body Type (Targeting exact text label fallback)
+    vehicle_info = find(r"Body\s*Type\s*[:\-]?\s*([A-Za-z0-9\s\-/]+?)(?=\s*(?:Total|Fuel|Online|\d{2}/))", t_pipe)
     if vehicle_info == "N/A":
-        # Attempt positional lookup prior to 'Online Pay' / registration markers
+        vehicle_info = find(r"Make\s*/\s*Model\s*/\s*Variant\s*:\s*([A-Za-z0-9\s\-/]+?)\s*:\s*Fuel", t_pipe)
+    if vehicle_info == "N/A":
+        # Fallback reading backwards up from your "Online Payment" tracking element string block
         veh_match = re.search(r"([A-Za-z0-9\s\-/]{5,40})\s+(?:Online Pay|customer|PETROL)", t_pipe, re.IGNORECASE)
         if veh_match:
             vehicle_info = veh_match.group(1).strip()
