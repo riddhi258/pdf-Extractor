@@ -60,24 +60,20 @@ def extract_policy_details(text):
     elif "Private Car" in t_pipe:
         product = "Private Car Package Policy"
 
-    # --- 5. Sum Insured / IDV (Refined to avoid single-digit noise like '1') ---
+    # --- 5. Sum Insured / IDV (Updated specifically for your text) ---
     idv = "N/A"
-    idv_match = re.search(r"Total\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?[:\-]?\s*([\d,]{4,7}(?:\.\d{2})?)", t_pipe, re.IGNORECASE)
+    # Target the 'Total IDV (₹) 1 : 24375' pattern or 'Declared Value: 24,375' transcript pattern
+    idv_match = re.search(r"Declared\s*Value\s*[:\-]?\s*([\d,]+)", t_pipe, re.IGNORECASE)
     if idv_match:
         idv = idv_match.group(1).strip()
-        
+    
     if idv == "N/A":
-        idv_match = re.search(r"Vehicle\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?[:\-]?\s*([\d,]{4,7}(?:\.\d{2})?)", t_pipe, re.IGNORECASE)
+        idv_match = re.search(r"Total\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?[:\-\s]*\d*\s*[:\-\s]*([\d,]{4,7}(?:\.\d{2})?)", t_pipe, re.IGNORECASE)
         if idv_match:
             idv = idv_match.group(1).strip()
 
     if idv == "N/A":
-        idv_match = re.search(r"\b1\s*:\s*(\d{4,7})\s*:\s*0\s*:\s*0", t_pipe)
-        if idv_match:
-            idv = idv_match.group(1).strip()
-
-    if idv == "N/A":
-        idv_match = re.search(r"(?:Package Policy|Two-Whee\w*|Motor\s*Cycle)[^\d]*([\d,]{4,7})", t_pipe, re.IGNORECASE)
+        idv_match = re.search(r"Vehicle\s*IDV[^\d]*([\d,]{4,7})", t_pipe, re.IGNORECASE)
         if idv_match:
             idv = idv_match.group(1).strip()
 
@@ -100,27 +96,22 @@ def extract_policy_details(text):
         if "megha dinesh makwana" in t_pipe.lower() or "megha din" in t_pipe.lower():
             intermediary = "Megha Dinesh Makwana"
 
-    # --- 8. Vehicle Tracking Info ---
+    # --- 8. Vehicle Tracking Info (Updated for exact targets) ---
     fuel = find(r"Fuel\s*Type\s*[:\-]?\s*([A-Za-z]+)", t_pipe)
     chassis = find(r"Chassis\s*(?:No\.?|Number)\s*[:\-]?\s*([A-Z0-9]{10,17})", t_pipe)
     
-    # Engine Number / Motor No Extraction
+    # Engine Number extraction targeted right at "Engine No. /Motor No. (For EV)"
     engine = find(r"Engine\s*No\.\s*/\s*Motor\s*No\.\s*\(For\s*EV\)\s*[:\-]?\s*([A-Z0-9]{10,17})", t_pipe)
     if engine == "N/A":
         engine = find(r"Engine\s*(?:No\.?|Number).*?:\s*([A-Z0-9]{10,17})", t_pipe)
-    if engine == "N/A":
-        engine_match = re.search(r"([A-Z0-9]{10,17})\s+[A-Z]{2}\s*\d{2}\s*[A-Z]", t_pipe)
-        if engine_match:
-            engine = engine_match.group(1).strip()
 
-    # Vehicle Info (Body Type fallback rule included)
-    vehicle_info = find(r"Body\s*Type\s*[:\-]?\s*([A-Za-z0-9\s\-/]+?)(?=\s*(?:Total|Fuel|Online|\d{2}/))", t_pipe)
-    if vehicle_info == "N/A":
-        vehicle_info = find(r"Make\s*/\s*Model\s*/\s*Variant\s*:\s*([A-Za-z0-9\s\-/]+?)\s*:\s*Fuel", t_pipe)
-    if vehicle_info == "N/A":
-        veh_match = re.search(r"([A-Za-z0-9\s\-/]{5,40})\s+(?:Online Pay|customer|PETROL)", t_pipe, re.IGNORECASE)
-        if veh_match:
-            vehicle_info = veh_match.group(1).strip()
+    # Vehicle Info mapped from "Body Type : MOTOR CYCLE" or Make/Model row
+    vehicle_info = find(r"Body\s*Type\s*[:\-]?\s*([A-Za-z0-9\s\-/]+?)(?=\s*(?:Zone|Details|Total|Fuel))", t_pipe)
+    if vehicle_info == "N/A" or vehicle_info.upper() == "MOTOR CYCLE":
+        # Let's see if we can append the specific Model "HERO/GLAMOUR/FI DISC BS 6" instead of just "MOTOR CYCLE"
+        make_model = find(r"Make\s*/\s*Model\s*/\s*Variant\s*[:\-]?\s*([A-Za-z0-9\s\-/]+?)(?=\s*Fuel)", t_pipe)
+        if make_model != "N/A":
+            vehicle_info = make_model
 
     # Registration Number
     reg_no = find(r"(?:Registration\s*No\.?|Vehicle\s*No\.?|Regn\s*No\.?|Registration\s*Number)\s*[:\-]?\s*([A-Z]{2}[\s\-]?\d{2}[\s\-]?[A-Z]{1,2}[\s\-]?\d{4})", t_pipe)
