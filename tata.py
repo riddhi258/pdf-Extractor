@@ -51,15 +51,20 @@ def extract_policy_details(text):
 
     # --- 4. Product Name ---
     product = "N/A"
-    if "Two-Wheeler Package Policy" in t_pipe:
+    if "Two-Wheeler Package Policy" in t_pipe or "Two-Whee" in t_pipe:
         product = "Two-Wheeler Package Policy"
     elif "Private Car" in t_pipe:
         product = "Private Car Package Policy"
 
-    # --- 5. Sum Insured / IDV ---
+    # --- 5. Sum Insured / IDV (Updated Fallbacks) ---
     idv = find(r"Total\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?:\s*([\d,.]+)", t_pipe)
     if idv == "N/A":
         idv = find(r"1\s*:\s*(\d{4,7})\s*:\s*0\s*:\s*0", t_pipe)
+    if idv == "N/A":
+        # Capture numeric IDV following the policy types pattern
+        idv_match = re.search(r"(?:Package Policy|Two-Whee\w*)\s*(?:N/A\s*)?([\d,]{4,7})", t_pipe)
+        if idv_match:
+            idv = idv_match.group(1).strip()
 
     # --- 6. Premium Amount ---
     premium = find(r"Total\s*Premium\s*\(in\s*₹\s*\)[^\d]*([\d,]+)", t_pipe)
@@ -77,19 +82,33 @@ def extract_policy_details(text):
     if inter_match:
         intermediary = inter_match.group(1).strip()
     else:
-        if "megha dinesh makwana" in t_pipe.lower():
-            intermediary = "megha dinesh makwana"
+        if "megha dinesh makwana" in t_pipe.lower() or "megha din" in t_pipe.lower():
+            intermediary = "Megha Dinesh Makwana"
 
-    # --- 8. Vehicle Tracking Info ---
+    # --- 8. Vehicle Tracking Info (Updated Engine/Vehicle Fallbacks) ---
     fuel = find(r"Fuel\s*Type\s*[:\-]?\s*([A-Za-z]+)", t_pipe)
     chassis = find(r"Chassis\s*(?:No\.?|Number)\s*[:\-]?\s*([A-Z0-9]{10,17})", t_pipe)
-    engine = find(r"Engine\s*(?:No\.?|Number).*?:\s*([A-Z0-9]{10,17})", t_pipe)
-    vehicle_info = find(r"Make\s*/\s*Model\s*/\s*Variant\s*:\s*([A-Za-z0-9\s\-/]+?)\s*:\s*Fuel", t_pipe)
     
-    # --- Registration Number (Vehicle No) ---
+    # Engine Number extraction
+    engine = find(r"Engine\s*(?:No\.?|Number).*?:\s*([A-Z0-9]{10,17})", t_pipe)
+    if engine == "N/A":
+        # Look for engine signatures (typically alphanumeric code) adjacent to the Chassis/VIN string block
+        engine_match = re.search(r"([A-Z0-9]{10,17})\s+[A-Z]{2}\s*\d{2}\s*[A-Z]", t_pipe)
+        if engine_match:
+            engine = engine_match.group(1).strip()
+
+    # Vehicle Info / Make Model extraction
+    vehicle_info = find(r"Make\s*/\s*Model\s*/\s*Variant\s*:\s*([A-Za-z0-9\s\-/]+?)\s*:\s*Fuel", t_pipe)
+    if vehicle_info == "N/A":
+        # Attempt positional lookup prior to 'Online Pay' / registration markers
+        veh_match = re.search(r"([A-Za-z0-9\s\-/]{5,40})\s+(?:Online Pay|customer|PETROL)", t_pipe, re.IGNORECASE)
+        if veh_match:
+            vehicle_info = veh_match.group(1).strip()
+
+    # Registration Number (Vehicle No)
     reg_no = find(r"(?:Registration\s*No\.?|Vehicle\s*No\.?|Regn\s*No\.?|Registration\s*Number)\s*[:\-]?\s*([A-Z]{2}[\s\-]?\d{2}[\s\-]?[A-Z]{1,2}[\s\-]?\d{4})", t_pipe)
     if reg_no == "N/A":
-        reg_no = find(r"([A-Z]{2}[\s\-]?\d{2}[\s\-]?[A-Z]{1,2}[\s\-]?\d{4})", t_pipe)
+        reg_no = find(r"([A-Z]{2}[\s\-]?\d{2}[\s\-]?[A-Z]{1,3}[\s\-]?\d{4})", t_pipe)
         
     # --- 9. Mobile, Email & Identifiers ---
     customer_mobile = find(r"(?:Mobile\s*No\.?|Contact\s*No\.?|Customer\s*contact\s*number)\s*[:\-]?\s*([\d\*\+\s]+)", t_pipe)
@@ -104,7 +123,7 @@ def extract_policy_details(text):
     cust_email = customer_emails[0] if customer_emails else "N/A"
 
     pay_mode = "N/A"
-    if "paymentLinkCustomer" in t_pipe:
+    if "paymentLinkCustomer" in t_pipe or "Online Pay" in t_pipe:
         pay_mode = "Online Payment"
 
     return {
