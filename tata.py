@@ -27,42 +27,47 @@ def find(pattern, text, flags=re.IGNORECASE | re.DOTALL):
 
 # --- Extraction Logic ---
 def extract_policy_details(text):
-    # Clean whitespace
+    # Clean whitespace but keep it flexible for regex matching
     t = re.sub(r'\s+', ' ', text.replace("\n", " "))
+    
+    # Standardize characters to easily bypass table pipes and styling
+    t = t.replace("|", ":") 
 
     # --- DATE pattern ---
     DATE = r"(\d{1,2}\s+[A-Za-z]{3}\s+'?\d{2,4}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})"
 
-     # --- Policy Number ---
-    policy_no = find(r"Policy\s*(?:No\.?|Number|No\s*&\s*Certificate\s*No)\s*[:\-]?\s*([A-Z0-9\/\-]{5,})", t)
-
+    # --- Policy Number ---
+    policy_no = find(r"Policy\s*(?:No\.?|Number|No\s*&\s*Certificate\s*No)\s*[:\-]?\s*([A-Z0-9\s\/\-]{10,18})", t)
+    if policy_no != "N/A":
+        policy_no = re.sub(r'\s+', ' ', policy_no).strip()
 
     # --- Effective & Expiry Dates ---
     eff_date = exp_date = "N/A"
-    match = re.search(r"(?:OD\s*Cover\s*Period|Period\s*of\s*Insurance).*?" + DATE + r".*?(?:to|till)\s*" + DATE, t, re.IGNORECASE)
+    match = re.search(r"(?:OD\s*Cover\s*Period|Period\s*of\s*Insurance|Coverage\s*Details).*?" + DATE + r".*?(?:to|till|Valid\s*Till).*?" + DATE, t, re.IGNORECASE)
     if match:
         eff_date, exp_date = match.group(1).strip(), match.group(2).strip()
 
     # --- Customer Name ---
-    cust_name = find(r"(?:Insured\s*Name|Customer\s*Name|Policyholder\s*Name)\s*[:\-]?\s*([A-Za-z\s\.\']+?)(?:\s+Address|\s*$)", t)
+    cust_name = find(r"(?:Insured\s*Name|Customer\s*Name|Policyholder\s*Name|Name)\s*[:\-]\s*(?:Mr\.|Ms\.|Mrs\.)?\s*([A-Za-z\s\.\']+?)(?:\s*:\s*Address|\s+Address|\s*$)", t)
 
     # --- Financial Details ---
-    idv = find(r"(?:IDV|Sum\s*Insured|Liability\s*Limit)[^\d]*([\d,.]+)", t)
-    premium = find(r"(?:Total\s*Premium|Premium\s*Amount|Gross\s*Premium|Total\s*Payable)\s*[₹Rs\.:\s]*([\d,\.]+)", t)
+    idv = find(r"(?:Total\s*IDV|Vehicle\s*IDV|Sum\s*Insured|IDV)[^\d]*?([\d,.]+)", t)
+    premium = find(r"(?:Total\s*Policy\s*Premium|Premium\s*Amount\s*\(Including\s*GST\)|Total\s*Premium|Premium\s*Amount)[^\d]*?([\d,.]+)", t)
 
     # --- Intermediary ---
-    intermediary = find(
-        r"(?:Intermediary\s*Name|Agent\s*Name)\s*[:\-]?\s*([A-Za-z\s\.,]+?)(?:\s+Agent\s+License|\s+Code|\s+Private|\s+Ltd|\s*$)", t
-    )
+    # Captures the name from the row header format down to the code
+    intermediary = find(r"Agent/Intermediary\s*Name\s*:\s*Agent/Intermediary\s*Code\s*:\s*Agent/Intermediary\s*Contact\s*No\.\s*:\s*([A-Za-z\s\.,]+?)\s*:\s*[A-Z0-9]+", t)
+    if intermediary == "N/A":
+        intermediary = find(r"(?:Intermediary\s*Name|Agent\s*Name)\s*[:\-]?\s*([A-Za-z\s\.,]+?)(?:\s+Agent\s+License|\s+Code|\s+Private|\s+Ltd|\s*$)", t)
 
-    # --- Customer Mobile Number (handles Tata AIG format) ---
+    # --- Customer Mobile Number ---
     customer_mobile = find(r"Customer\s*contact\s*number\s*[:\-]?\s*([\d\*\s]+)", t)
     if customer_mobile == "N/A":
-        customer_mobile = find(r"(?:Mobile\s*No\.?|Contact\s*No\.?|Phone\s*No\.?)\s*[:\-]?\s*(\b[6-9]\d{9}\b)", t)
+        customer_mobile = find(r"(?:Mobile\s*No\.?|Contact\s*No\.?|Phone\s*No\.?)\s*[:\-]?\s*([\+\d\*\s]+)", t)
     if customer_mobile == "N/A":
         customer_mobile = find(r"(\b[6-9]\d{9}\b)", t)
     if customer_mobile != "N/A":
-        customer_mobile = customer_mobile.replace(" ", "").replace("*", "X")
+        customer_mobile = customer_mobile.replace(" ", "").replace("*", "X").replace("+91", "")
 
     # --- Email Extraction ---
     all_emails = re.findall(r"([a-zA-Z0-9._%+*-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})", t, re.IGNORECASE)
@@ -72,23 +77,28 @@ def extract_policy_details(text):
 
     # --- Vehicle Info ---
     fuel = find(r"Fuel\s*Type\s*[:\-]?\s*([A-Za-z]+)", t)
-    reg_no = find(r"(?:Registration\s*No|Vehicle\s*No|Regn\s*No)\s*[:\-]?\s*([A-Z0-9\s]{5,}?)(?:\s+Registration\s+Authority|\s*$)", t)
-    chassis = find(r"Chassis\s*(?:No\.?|Number)\s*[:\-]?\s*([A-Z0-9]{5,})", t)
-    engine = find(r"(?:Engine\s*(?:No\.?|Number)|Battery\s*Number)\s*[:\-]?\s*([A-Z0-9]{5,})", t)
+    reg_no = find(r"(?:Registration\s*No\.?|Vehicle\s*No|Regn\s*No)\s*[:\-]\s*([A-Z]{2}\s*[0-9]{1,2}\s*[A-Z]{1,3}\s*[0-9]{4}|[A-Z0-9\s]{5,15})", t)
+    if reg_no != "N/A": reg_no = reg_no.strip()
+    
+    chassis = find(r"Chassis\s*(?:No\.?|Number)\s*[:\-]\s*([A-Z0-9]{5,})", t)
+    engine = find(r"(?:Engine\s*(?:No\.?|Number)|Engine\s*No\.\s*/Motor\s*No\.\s*\(For\s*EV\)|Battery\s*Number)\s*[:\-]\s*([A-Z0-9]{5,})", t)
 
     # --- Product ---
-    product = find(r"(?:Product\s*Name|Policy\s*Type|Cover\s*Type)\s*[:\-]?\s*([A-Za-z\s]+Policy)", t)
-    if product == "N/A":
-        if "Private Car" in t:
-            product = "Private Car Package Policy"
-        elif "Goods Carrying Vehicle" in t:
-            product = "Goods Carrying Vehicle Policy"
+    product = "N/A"
+    if "Two-Wheeler Package Policy" in t:
+        product = "Two-Wheeler Package Policy"
+    else:
+        product = find(r"(?:Product\s*Name|Policy\s*Type|Cover\s*Type)\s*[:\-]?\s*([A-Za-z\s]+Policy)", t)
+        if product == "N/A":
+            if "Private Car" in t:
+                product = "Private Car Package Policy"
+            elif "Goods Carrying Vehicle" in t:
+                product = "Goods Carrying Vehicle Policy"
 
     # --- Vehicle Make / Model ---
-    vehicle_info = find(
-        r"(?:Make\s*/\s*Model|Make\s*and\s*Model|Vehicle\s*Make)\s*[:\-]?\s*([A-Za-z0-9\s\-/]+?)(?:\s+Fuel\s+Type|\s*$)",
-        t,
-    )
+    vehicle_info = find(r"Make\s*/\s*Model\s*/\s*Variant\s*:\s*([A-Za-z0-9\s\-/]+?)\s*:\s*Fuel", t)
+    if vehicle_info == "N/A":
+        vehicle_info = find(r"(?:Make\s*/\s*Model|Make\s*and\s*Model|Vehicle\s*Make)\s*[:\-]?\s*([A-Za-z0-9\s\-/]+?)(?:\s+Fuel\s+Type|\s*$)", t)
     if vehicle_info == "N/A":
         vehicle_info = find(r"([A-Za-z]+\s+Ltd\.?\s+[A-Za-z0-9\s\-]+BSVI?)", t)
 
@@ -100,7 +110,7 @@ def extract_policy_details(text):
         pay_mode = "Cheque"
 
     return {
-        "Customer Id": find(r"(?:Customer\s*ID|Client\s*ID)\s*[:\-]?\s*([A-Z0-9\-\/]+)", t),
+        "Customer Id": find(r"(?:Customer\s*ID|Client\s*ID)\s*[:\-]\s*([A-Z0-9\-\/]+)", t),
         "Customer Name": cust_name,
         "Policy No": policy_no,
         "Effective Date": eff_date,
