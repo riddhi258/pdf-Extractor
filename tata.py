@@ -51,18 +51,19 @@ def extract_policy_details(text):
 
     # --- 4. Product Name ---
     product = "N/A"
-    if "Two-Wheeler Package Policy" in t_pipe or "Two-Whee" in t_pipe:
+    if any(k in t_pipe for k in ["Two-Wheeler", "Two-Whee", "Motor Cycle", "Motorcycle"]):
         product = "Two-Wheeler Package Policy"
     elif "Private Car" in t_pipe:
         product = "Private Car Package Policy"
 
-    # --- 5. Sum Insured / IDV (Targeting exact label anchor) ---
+    # --- 5. Sum Insured / IDV (Looking for vehicle IDV / Total IDV) ---
     idv = find(r"Total\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?[:\-]?\s*([\d,.]+)", t_pipe)
+    if idv == "N/A":
+        idv = find(r"Vehicle\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?[:\-]?\s*([\d,.]+)", t_pipe)
     if idv == "N/A":
         idv = find(r"1\s*:\s*(\d{4,7})\s*:\s*0\s*:\s*0", t_pipe)
     if idv == "N/A":
-        # Positional alignment fallback using your exact document text structure
-        idv_match = re.search(r"(?:Package Policy|Two-Whee\w*)\s*(?:N/A\s*)?([\d,]{4,7})", t_pipe)
+        idv_match = re.search(r"(?:Package Policy|Two-Whee\w*|Motor\s*Cycle)\s*(?:N/A\s*)?([\d,]{4,7})", t_pipe, re.IGNORECASE)
         if idv_match:
             idv = idv_match.group(1).strip()
 
@@ -89,27 +90,25 @@ def extract_policy_details(text):
     fuel = find(r"Fuel\s*Type\s*[:\-]?\s*([A-Za-z]+)", t_pipe)
     chassis = find(r"Chassis\s*(?:No\.?|Number)\s*[:\-]?\s*([A-Z0-9]{10,17})", t_pipe)
     
-    # Engine Number/Motor No (Targeting your exact label string signature)
+    # Engine Number / Motor No
     engine = find(r"Engine\s*No\.\s*/\s*Motor\s*No\.\s*\(For\s*EV\)\s*[:\-]?\s*([A-Z0-9]{10,17})", t_pipe)
     if engine == "N/A":
         engine = find(r"Engine\s*(?:No\.?|Number).*?:\s*([A-Z0-9]{10,17})", t_pipe)
     if engine == "N/A":
-        # Fallback tracking using the structural block parsing signature adjacent to Registration values
         engine_match = re.search(r"([A-Z0-9]{10,17})\s+[A-Z]{2}\s*\d{2}\s*[A-Z]", t_pipe)
         if engine_match:
             engine = engine_match.group(1).strip()
 
-    # Vehicle Info / Body Type (Targeting exact text label fallback)
+    # Vehicle Info (Checking Body Type, Make/Model, or Motorcycle tags)
     vehicle_info = find(r"Body\s*Type\s*[:\-]?\s*([A-Za-z0-9\s\-/]+?)(?=\s*(?:Total|Fuel|Online|\d{2}/))", t_pipe)
     if vehicle_info == "N/A":
         vehicle_info = find(r"Make\s*/\s*Model\s*/\s*Variant\s*:\s*([A-Za-z0-9\s\-/]+?)\s*:\s*Fuel", t_pipe)
     if vehicle_info == "N/A":
-        # Fallback reading backwards up from your "Online Payment" tracking element string block
         veh_match = re.search(r"([A-Za-z0-9\s\-/]{5,40})\s+(?:Online Pay|customer|PETROL)", t_pipe, re.IGNORECASE)
         if veh_match:
             vehicle_info = veh_match.group(1).strip()
 
-    # Registration Number (Vehicle No)
+    # Registration Number
     reg_no = find(r"(?:Registration\s*No\.?|Vehicle\s*No\.?|Regn\s*No\.?|Registration\s*Number)\s*[:\-]?\s*([A-Z]{2}[\s\-]?\d{2}[\s\-]?[A-Z]{1,2}[\s\-]?\d{4})", t_pipe)
     if reg_no == "N/A":
         reg_no = find(r"([A-Z]{2}[\s\-]?\d{2}[\s\-]?[A-Z]{1,3}[\s\-]?\d{4})", t_pipe)
