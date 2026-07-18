@@ -30,6 +30,8 @@ def find(pattern, text, flags=re.IGNORECASE | re.DOTALL):
 
 # --- Date Formatter ---
 def format_date(date_str):
+    if not date_str or date_str == "N/A":
+        return "N/A"
     try:
         for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%d %b %Y", "%d %b '%y", "%d.%m.%Y", "%d-%b-%Y", "%d %B %Y", "%d-%B-%Y"):
             try:
@@ -50,8 +52,8 @@ def extract_policy_details(text):
     # --- 1. Date Extraction Module ---
     DATE_RE = r"(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})"
     dates = re.findall(DATE_RE, t_pipe)
-    eff_date = dates[0] if len(dates) > 0 else "N/A"
-    exp_date = dates[1] if len(dates) > 1 else "N/A"
+    eff_date = format_date(dates[0]) if len(dates) > 0 else "N/A"
+    exp_date = format_date(dates[1]) if len(dates) > 1 else "N/A"
 
     # --- 2. Customer Name ---
     cust_name = find(r"Hi\s+(?:Mr\.|Ms\.|Mrs\.)?\s*([A-Za-z\s\.\']+?)\s+Welcome to", t_pipe)
@@ -81,13 +83,11 @@ def extract_policy_details(text):
         premium = find(r"Premium\s*Amount\s*\(Including\s*GST\)\s*:\s*(?:[₹Rs\.\s])*([\d,.]+)", t_pipe)
 
     # --- 7. Intermediary Details ---
-    # Safe capture targeting structural blocks with explicit outer bounds
     intermediary = "N/A"
     inter_match = re.search(r"Agent/Intermediary\s*Contact\s*No\.\s*:\s*([A-Za-z\s\.]+?)\s*:\s*[A-Z0-9]+", t_pipe, re.IGNORECASE)
     if inter_match:
         intermediary = inter_match.group(1).strip()
     else:
-        # Fallback split approach if spacing varies dramatically
         if "megha dinesh makwana" in t_pipe.lower():
             intermediary = "megha dinesh makwana"
 
@@ -96,8 +96,6 @@ def extract_policy_details(text):
     chassis = find(r"Chassis\s*(?:No\.?|Number)\s*[:\-]?\s*([A-Z0-9]{10,17})", t_pipe)
     engine = find(r"Engine\s*(?:No\.?|Number).*?:\s*([A-Z0-9]{10,17})", t_pipe)
     vehicle_info = find(r"Make\s*/\s*Model\s*/\s*Variant\s*:\s*([A-Za-z0-9\s\-/]+?)\s*:\s*Fuel", t_pipe)
-    
-    # Flexible fallback matching sequence for registration number formats
     reg_no = find(r"Registration\s*No\.\s*:\s*([A-Z]{2}\s*\d{2}\s*[A-Z0-9\s]{2,8})", t_pipe)
 
     # --- 9. Mobile, Email & Identifiers ---
@@ -128,7 +126,7 @@ def extract_policy_details(text):
         "Sum Insured / IDV": idv,
         "Premium Paid (Incl. GST)": premium,
         "Intermediary Name": intermediary,
-        "Customer Mobile Number": customer_mobile,
+        "CUST_MOBILE_NUMBER": customer_mobile,  # Corrected to match configured column mapping
         "CUST_EMAIL": cust_email,
         "Fuel Type": fuel,
         "Vehicle No / Registration Number": reg_no,
@@ -144,7 +142,7 @@ if uploaded_files:
     for file in uploaded_files:
         reader = PdfReader(file)
         text = " ".join(page.extract_text() or "" for page in reader.pages)
-        data = extract_policy_details(text, file.name)
+        data = extract_policy_details(text) # Removed the extra file.name parameter match bug
         data["File Name"] = file.name
         all_data.append(data)
 
