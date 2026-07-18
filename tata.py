@@ -76,14 +76,33 @@ def extract_policy_details(text):
         # Fallback tracking if pipe structures are stripped out early
         intermediary = find(r"Agent/Intermediary\s*Contact\s*No\.\s*:\s*([A-Za-z\s\.]+?)\s*:\s*[A-Z0-9]+", t_pipe)
 
-    # --- 8. Vehicle Tracking Info ---
-    fuel = find(r"Fuel\s*Type\s*[:\-]?\s*([A-Za-z]+)", t_pipe)
-    reg_no = find(r"Registration\s*No\.\s*:\s*([A-Z]{2}\s*[0-9]{2}\s*[A-Z0-9\s]{2,8})", t_pipe)
+    # --- 8. Vehicle Tracking Info --
     chassis = find(r"Chassis\s*(?:No\.?|Number)\s*[:\-]?\s*([A-Z0-9]{10,17})", t_pipe)
     engine = find(r"Engine\s*(?:No\.?|Number).*?:\s*([A-Z0-9]{10,17})", t_pipe)
     
     # Extract the full Make / Model line block directly
-    vehicle_info = find(r"Make\s*/\s*Model\s*/\s*Variant\s*:\s*([A-Za-z0-9\s\-/]+?)\s*:\s*Fuel", t_pipe)
+  # --- Vehicle Info (Make / Model / Modal / Variant / Make and Model) ---
+    vehicle_info = find(
+        r"(?:Make\s*(?:\/|and)\s*(?:Model|Modal)\s*&?\s*Variant)\s*[:\-]?\s*([A-Za-z0-9\s\-\(\)\/]+?)(?=\s*Engine|\s*Chassis|$)",
+        t
+    )
+    if vehicle_info == "N/A":
+        vehicle_info = find(
+            r"(?:Make\s*(?:\/|and)\s*(?:Model|Modal))\s*[:\-]?\s*([A-Za-z0-9\s\-\(\)\/]+?)(?=\s*Engine|\s*Chassis|$)",
+            t
+        )
+    if vehicle_info == "N/A":
+        vehicle_info = find(
+            r"(?:Vehicle\s*Description|Model\s*Details)\s*[:\-]?\s*([A-Za-z0-9\s\-\(\)\/]+)",
+            t
+        )
+    vehicle_info = vehicle_info.strip()
+
+    # --- Registration Number ---
+    reg_no = find(
+        r"(?:Registration\s*No\.?|Vehicle\s*No\.?|Regn\s*No\.?|Registration\s*Number)\s*[:\-]?\s*([A-Z]{2}\s*\d{2}\s*[A-Z]{1,2}\s*\d{4})",
+        t
+    )
 
     # --- 9. Mobile, Email & Identifiers ---
     customer_mobile = find(r"Contact\s*No\.\s*:\s*([\+\d\*\s]+)", t_pipe)
