@@ -1,3 +1,10 @@
+The error **`NameError: name 't' is not defined`** is happening because your script defines the variables `t_clean` and `t_pipe` at the top of the function, but further down (in the Policy Number, Premium, and Registration Number extractions), it accidentally tries to look through a variable named `t`.
+
+To fix this, those instances need to be pointed to `t_pipe`.
+
+Here is the fully corrected, plug-and-play code:
+
+```python
 import streamlit as st
 import pandas as pd
 import re
@@ -45,7 +52,9 @@ def extract_policy_details(text):
         cust_name = find(r"Name\s*:\s*(?:Mr\.|Ms\.|Mrs\.)?\s*([A-Za-z\s\.\']+?)\s*:", t_pipe)
 
     # --- 3. Policy Number ---
-    policy_no = find(r"Policy\s*(?:No\.?|Number)\s*[:\-]?\s*(\d{6,15})", t)
+    policy_no = find(r"Policy\s*(?:No\.?|Number)\s*[:\-]?\s*([0-9\s]{10,20})", t_pipe)
+    if policy_no != "N/A":
+        policy_no = re.sub(r'\s+', ' ', policy_no).strip()
 
     # --- 4. Product Name ---
     product = "N/A"
@@ -60,14 +69,15 @@ def extract_policy_details(text):
         idv = find(r"1\s*:\s*(\d{4,7})\s*:\s*0\s*:\s*0", t_pipe)
 
     # --- 6. Premium Amount ---
-    premium = find(r"Total\s*Premium\s*\(in\s*₹\s*\)[^\d]*([\d,]+)", t)
+    premium = find(r"Total\s*Premium\s*\(in\s*₹\s*\)[^\d]*([\d,]+)", t_pipe)
     if premium == "N/A":
-        premium = find(r"(?:Total\s*Premium|Premium\s*Amount|Premium\s*Paid)[^\d]*([\d,\.]+)", t)
+        premium = find(r"(?:Total\s*Premium|Premium\s*Amount|Premium\s*Paid)[^\d]*([\d,\.]+)", t_pipe)
     if premium != "N/A":
         try:
             premium = f"{float(premium.replace(',', '')):,.0f}"
         except:
             pass
+            
     # --- 7. Intermediary Details ---
     intermediary = "N/A"
     inter_match = re.search(r"Agent/Intermediary\s*Contact\s*No\.\s*:\s*([A-Za-z\s\.]+?)\s*:\s*[A-Z0-9]+", t_pipe, re.IGNORECASE)
@@ -82,14 +92,16 @@ def extract_policy_details(text):
     chassis = find(r"Chassis\s*(?:No\.?|Number)\s*[:\-]?\s*([A-Z0-9]{10,17})", t_pipe)
     engine = find(r"Engine\s*(?:No\.?|Number).*?:\s*([A-Z0-9]{10,17})", t_pipe)
     vehicle_info = find(r"Make\s*/\s*Model\s*/\s*Variant\s*:\s*([A-Za-z0-9\s\-/]+?)\s*:\s*Fuel", t_pipe)
+    
     # --- Registration Number (Vehicle No) ---
-    reg_no = find(r"(?:Registration\s*No\.?|Vehicle\s*No\.?|Regn\s*No\.?|Registration\s*Number)\s*[:\-]?\s*([A-Z]{2}[\s\-]?\d{2}[\s\-]?[A-Z]{1,2}[\s\-]?\d{4})", t)
+    reg_no = find(r"(?:Registration\s*No\.?|Vehicle\s*No\.?|Regn\s*No\.?|Registration\s*Number)\s*[:\-]?\s*([A-Z]{2}[\s\-]?\d{2}[\s\-]?[A-Z]{1,2}[\s\-]?\d{4})", t_pipe)
     if reg_no == "N/A":
-        reg_no = find(r"([A-Z]{2}[\s\-]?\d{2}[\s\-]?[A-Z]{1,2}[\s\-]?\d{4})", t)
+        reg_no = find(r"([A-Z]{2}[\s\-]?\d{2}[\s\-]?[A-Z]{1,2}[\s\-]?\d{4})", t_pipe)
+        
     # --- 9. Mobile, Email & Identifiers ---
     customer_mobile = find(r"(?:Mobile\s*No\.?|Contact\s*No\.?|Customer\s*contact\s*number)\s*[:\-]?\s*([\d\*\+\s]+)", t_pipe)
     if customer_mobile == "N/A":
-        customer_mobile = find(r"\b([6-9]\d{9})\b", t_pipe) # Wrapped securely with outer capturing brackets
+        customer_mobile = find(r"\b([6-9]\d{9})\b", t_pipe) 
     if customer_mobile != "N/A":
         customer_mobile = customer_mobile.replace(" ", "").replace("*", "X").replace("+91", "")
 
@@ -151,3 +163,5 @@ if uploaded_files:
 
 st.markdown("---")
 st.caption("Built with 💙 Streamlit + PyPDF2 + Regex Extraction | Supports Tata AIG, Royal Sundaram, ICICI Lombard & more")
+
+```
