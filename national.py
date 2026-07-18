@@ -64,7 +64,7 @@ def extract_policy_details(text, file_name):
     cust_id = find(r"(?:Customer\s*ID|Client\s*ID)\s*[:\-]?\s*([0-9A-Z\/\-]+)", t)
 
     # --- Customer Name ---
-    cust_name = find(r"(?:Insured|Customer|Policyholder)\s*Name\s*[:\-]?\s*([A-Za-z\s\.\']+)", t)
+    cust_name = find(r"(?:Insured|Customer|Policyholder|Customer Name)\s*Name\s*[:\-]?\s*([A-Za-z\s\.\']+)", t)
     cust_name = cust_name.strip().title() if cust_name != "N/A" else "N/A"
 
     # --- Product Name ---
