@@ -1,10 +1,3 @@
-The error **`NameError: name 't' is not defined`** is happening because your script defines the variables `t_clean` and `t_pipe` at the top of the function, but further down (in the Policy Number, Premium, and Registration Number extractions), it accidentally tries to look through a variable named `t`.
-
-To fix this, those instances need to be pointed to `t_pipe`.
-
-Here is the fully corrected, plug-and-play code:
-
-```python
 import streamlit as st
 import pandas as pd
 import re
