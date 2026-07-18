@@ -44,9 +44,7 @@ def extract_policy_details(text):
         cust_name = find(r"Name\s*:\s*(?:Mr\.|Ms\.|Mrs\.)?\s*([A-Za-z\s\.\']+?)\s*:", t_pipe)
 
     # --- 3. Policy Number ---
-    policy_no = find(r"Policy\s*(?:No\.?|Number)\s*[:\-]?\s*([0-9\s]{10,20})", t_pipe)
-    if policy_no != "N/A":
-        policy_no = re.sub(r'\s+', ' ', policy_no).strip()
+    policy_no = find(r"Policy\s*(?:No\.?|Number)\s*[:\-]?\s*(\d{6,15})", t)
 
     # --- 4. Product Name ---
     product = "N/A"
@@ -83,21 +81,7 @@ def extract_policy_details(text):
     
     # Extract the full Make / Model line block directly
   # --- Vehicle Info (Make / Model / Modal / Variant / Make and Model) ---
-    vehicle_info = find(
-        r"(?:Make\s*(?:\/|and)\s*(?:Model|Modal)\s*&?\s*Variant)\s*[:\-]?\s*([A-Za-z0-9\s\-\(\)\/]+?)(?=\s*Engine|\s*Chassis|$)",
-        t
-    )
-    if vehicle_info == "N/A":
-        vehicle_info = find(
-            r"(?:Make\s*(?:\/|and)\s*(?:Model|Modal))\s*[:\-]?\s*([A-Za-z0-9\s\-\(\)\/]+?)(?=\s*Engine|\s*Chassis|$)",
-            t
-        )
-    if vehicle_info == "N/A":
-        vehicle_info = find(
-            r"(?:Vehicle\s*Description|Model\s*Details)\s*[:\-]?\s*([A-Za-z0-9\s\-\(\)\/]+)",
-            t
-        )
-    vehicle_info = vehicle_info.strip()
+    vehicle_info = find(r"Make\s*/\s*Model\s*/\s*Variant\s*:\s*([A-Za-z0-9\s\-/]+?)\s*:\s*Fuel", t_pipe)
 
     # --- Registration Number ---
     reg_no = find(
@@ -106,9 +90,12 @@ def extract_policy_details(text):
     )
 
     # --- 9. Mobile, Email & Identifiers ---
-    customer_mobile = find(r"Contact\s*No\.\s*:\s*([\+\d\*\s]+)", t_pipe)
-    if customer_mobile != "N/A":
-        customer_mobile = customer_mobile.replace(" ", "").replace("*", "X").replace("+91", "")
+      # --- Customer Mobile ---
+    mobile = find(r"(?:Mobile\s*No\.?|Customer\s*contact\s*number)\s*[:\-]?\s*([\d\*\s]+)", t)
+    if mobile == "N/A":
+        mobile = find(r"\b[6-9]\d{9}\b", t)
+    if mobile != "N/A":
+        mobile = mobile.replace(" ", "").replace("*", "X")
 
     all_emails = re.findall(r"([a-zA-Z0-9._%+*-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})", t_pipe, re.IGNORECASE)
     service_email_patterns = [r".*services.*", r".*@royalsundaram\.in", r".*@tataaig\.com", r".*@icicilombard\.com"]
