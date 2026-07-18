@@ -26,90 +26,81 @@ def find(pattern, text, flags=re.IGNORECASE | re.DOTALL):
     return match.group(1).strip() if match else "N/A"
 
 def extract_policy_details(text):
-    # Standardize spaces and clean layout components
+    # Clean up sequential spaces while retaining standard formatting structure
     t = re.sub(r'\s+', ' ', text)
-    t_clean = t.replace("|", ":")
+    t_pipe = t.replace("\n", " ")
 
-    # --- Date Parsing Engine ---
+    # --- 1. Date Extraction Module ---
+    # Captures dates inside the target period format safely
     DATE_RE = r"(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})"
-    dates = re.findall(DATE_RE, t_clean)
-    
-    eff_date = "N/A"
-    exp_date = "N/A"
-    if len(dates) >= 2:
-        # Avoid picking up vehicle registration date (which usually follows later in text)
-        eff_date = dates[0]
-        exp_date = dates[1]
+    dates = re.findall(DATE_RE, t_pipe)
+    eff_date = dates[0] if len(dates) > 0 else "N/A"
+    exp_date = dates[1] if len(dates) > 1 else "N/A"
 
-    # --- Policy Number ---
-    policy_no = find(r"Policy\s*(?:No\.?|Number)\s*[:\-]?\s*([0-9\s]{10,18})", t_clean)
+    # --- 2. Customer Name ---
+    # Extracts the full name right from the opening welcome salute text
+    cust_name = find(r"Hi\s+(Mr\.|Ms\.|Mrs\.)?\s*([A-Za-z\s\.\']+?)\s+Welcome to", t_pipe)
+    if cust_name == "N/A":
+        cust_name = find(r"Name\s*:\s*(?:Mr\.|Ms\.|Mrs\.)?\s*([A-Za-z\s\.\']+?)\s*:", t_pipe)
+
+    # --- 3. Policy Number ---
+    policy_no = find(r"Policy\s*(?:No\.?|Number)\s*[:\-]?\s*([0-9\s]{10,20})", t_pipe)
     if policy_no != "N/A":
         policy_no = re.sub(r'\s+', ' ', policy_no).strip()
 
-    # --- Customer Name ---
-    # Captures name while rejecting trailing table elements
-    cust_name = find(r"Name\s*:\s*(?:Mr\.|Ms\.|Mrs\.)?\s*([A-Za-z\s\.\']+?)\s*(?:Address|:)", t_clean)
+    # --- 4. Product Name ---
+    product = "N/A"
+    if "Two-Wheeler Package Policy" in t_pipe:
+        product = "Two-Wheeler Package Policy"
+    elif "Private Car" in t_pipe:
+        product = "Private Car Package Policy"
 
-    # --- Financial Details ---
-    # Focuses on explicit numeric totals
-    idv = find(r"Total\s*IDV\s*:\s*([\d,.]+)", t_clean)
+    # --- 5. Sum Insured / IDV ---
+    # Pulls the total IDV from the numbered insurance schedule array structure
+    idv = find(r"Total\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?:\s*([\d,.]+)", t_pipe)
     if idv == "N/A":
-        idv = find(r"Vehicle\s*IDV\s*\(?\s*₹\s*\)?\s*:\s*([\d,.]+)", t_clean)
-        
-    premium = find(r"Total\s*Policy\s*Premium\s*:\s*(?:[₹Rs\.\s])*([\d,.]+)", t_clean)
+        idv = find(r"1\s*:\s*(\d{4,7})\s*:\s*0\s*:\s*0", t_pipe)  # Looks for the raw row values sequence
+
+    # --- 6. Premium Amount ---
+    premium = find(r"Total\s*Policy\s*Premium\s*:\s*(?:[₹Rs\.\s])*([\d,.]+)", t_pipe)
     if premium == "N/A":
-        premium = find(r"Premium\s*Amount\s*\(Including\s*GST\)\s*:\s*(?:[₹Rs\.\s])*([\d,.]+)", t_clean)
+        premium = find(r"Premium\s*Amount\s*\(Including\s*GST\)\s*:\s*(?:[₹Rs\.\s])*([\d,.]+)", t_pipe)
 
-    # --- Intermediary Name ---
-    # Tata AIG places names in a secondary line beneath the row headers
+    # --- 7. Intermediary Details ---
+    # Targets the separate string chunk generated beneath the combined structural headers
     intermediary = "N/A"
-    inter_match = re.search(r"Agent/Intermediary\s*Contact\s*No\.\s*:\s*(.*?)\s*:\s*[A-Z0-9]+", t_clean, re.IGNORECASE)
+    inter_match = re.search(r"Agent/Intermediary\s*Contact\s*No\..*?\|\s*([A-Za-z\s\.]+?)\s*\|\s*[A-Z0-9]+", t)
     if inter_match:
-        # Grab text directly following the headers structure
-        raw_segment = inter_match.group(1).strip()
-        # Clean out lingering headers if any
-        intermediary = raw_segment.split(':')[-1].strip()
+        intermediary = inter_match.group(1).strip()
+    else:
+        # Fallback tracking if pipe structures are stripped out early
+        intermediary = find(r"Agent/Intermediary\s*Contact\s*No\.\s*:\s*([A-Za-z\s\.]+?)\s*:\s*[A-Z0-9]+", t_pipe)
 
-    # --- Customer Mobile Number ---
-    customer_mobile = find(r"Contact\s*No\.\s*:\s*([\+\d\*\s]+)", t_clean)
+    # --- 8. Vehicle Tracking Info ---
+    fuel = find(r"Fuel\s*Type\s*[:\-]?\s*([A-Za-z]+)", t_pipe)
+    reg_no = find(r"Registration\s*No\.\s*:\s*([A-Z]{2}\s*[0-9]{2}\s*[A-Z0-9\s]{2,8})", t_pipe)
+    chassis = find(r"Chassis\s*(?:No\.?|Number)\s*[:\-]?\s*([A-Z0-9]{10,17})", t_pipe)
+    engine = find(r"Engine\s*(?:No\.?|Number).*?:\s*([A-Z0-9]{10,17})", t_pipe)
+    
+    # Extract the full Make / Model line block directly
+    vehicle_info = find(r"Make\s*/\s*Model\s*/\s*Variant\s*:\s*([A-Za-z0-9\s\-/]+?)\s*:\s*Fuel", t_pipe)
+
+    # --- 9. Mobile, Email & Identifiers ---
+    customer_mobile = find(r"Contact\s*No\.\s*:\s*([\+\d\*\s]+)", t_pipe)
     if customer_mobile != "N/A":
         customer_mobile = customer_mobile.replace(" ", "").replace("*", "X").replace("+91", "")
 
-    # --- Email Extraction ---
-    all_emails = re.findall(r"([a-zA-Z0-9._%+*-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})", t_clean, re.IGNORECASE)
+    all_emails = re.findall(r"([a-zA-Z0-9._%+*-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})", t_pipe, re.IGNORECASE)
     service_email_patterns = [r".*services.*", r".*@royalsundaram\.in", r".*@tataaig\.com", r".*@icicilombard\.com"]
     customer_emails = [email for email in all_emails if not any(re.match(p, email, re.IGNORECASE) for p in service_email_patterns)]
     cust_email = customer_emails[0] if customer_emails else "N/A"
 
-    # --- Vehicle Info Engine ---
-    fuel = find(r"Fuel\s*Type\s*:\s*([A-Za-z]+)", t_clean)
-    
-    reg_no = find(r"Registration\s*No\.\s*:\s*([A-Z]{2}\s*[0-9]{1,2}\s*[A-Z0-9\s]{2,8})", t_clean)
-    if reg_no != "N/A": 
-        reg_no = reg_no.strip()
-        
-    chassis = find(r"Chassis\s*(?:No\.?|Number)\s*:\s*([A-Z0-9]{5,})", t_clean)
-    engine = find(r"Engine\s*(?:No\.?|Number)\s*(?:\/Motor\s*No\.\s*\(For\s*EV\))?\s*:\s*([A-Z0-9]{5,})", t_clean)
-
-    # --- Product Name ---
-    product = "N/A"
-    if "Two-Wheeler Package Policy" in t_clean:
-        product = "Two-Wheeler Package Policy"
-    elif "Private Car" in t_clean:
-        product = "Private Car Package Policy"
-
-    # --- Vehicle Make / Model ---
-    vehicle_info = find(r"Make\s*/\s*Model\s*/\s*Variant\s*:\s*([A-Za-z0-9\s\-/]+?)\s*:\s*Fuel", t_clean)
-
-    # --- Payment Mode ---
     pay_mode = "N/A"
-    if "paymentLinkCustomer" in t_clean:
+    if "paymentLinkCustomer" in t_pipe:
         pay_mode = "Online Payment"
-    else:
-        pay_mode = find(r"(?:Payment\s*Mode|Mode\s*of\s*Payment)\s*[:\-]?\s*([A-Za-z\s]+)", t_clean)
 
     return {
-        "Customer Id": find(r"Client\s*ID\s*:\s*([A-Z0-9\-\/]+)", t_clean),
+        "Customer Id": find(r"Client\s*ID\s*:\s*([A-Z0-9\-\/]+)", t_pipe),
         "Customer Name": cust_name,
         "Policy No": policy_no,
         "Effective Date": eff_date,
