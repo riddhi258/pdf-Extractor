@@ -57,13 +57,29 @@ def extract_policy_details(text):
         product = "Private Car Package Policy"
 
     # --- 5. Sum Insured / IDV (Looking for vehicle IDV / Total IDV) ---
-    idv = find(r"Total\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?[:\-]?\s*([\d,.]+)", t_pipe)
+    # --- 5. Sum Insured / IDV (Refined to avoid single-digit noise) ---
+    idv = "N/A"
+    
+    # 1. Look for explicit Total IDV labels followed by a realistic amount (at least 4 digits)
+    idv_match = re.search(r"Total\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?[:\-]?\s*([\d,]{4,7}(?:\.\d{2})?)", t_pipe, re.IGNORECASE)
+    if idv_match:
+        idv = idv_match.group(1).strip()
+        
+    # 2. Look for Vehicle IDV labels followed by a realistic amount
     if idv == "N/A":
-        idv = find(r"Vehicle\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?[:\-]?\s*([\d,.]+)", t_pipe)
+        idv_match = re.search(r"Vehicle\s*IDV\s*(?:\(?\s*₹\s*\)?\s*)?[:\-]?\s*([\d,]{4,7}(?:\.\d{2})?)", t_pipe, re.IGNORECASE)
+        if idv_match:
+            idv = idv_match.group(1).strip()
+
+    # 3. Table structural row signature fallback (captures the 4-7 digit value, ignoring the index '1')
     if idv == "N/A":
-        idv = find(r"1\s*:\s*(\d{4,7})\s*:\s*0\s*:\s*0", t_pipe)
+        idv_match = re.search(r"\b1\s*:\s*(\d{4,7})\s*:\s*0\s*:\s*0", t_pipe)
+        if idv_match:
+            idv = idv_match.group(1).strip()
+
+    # 4. Trailing block sequence fallback (ensures the value caught has at least 4 digits)
     if idv == "N/A":
-        idv_match = re.search(r"(?:Package Policy|Two-Whee\w*|Motor\s*Cycle)\s*(?:N/A\s*)?([\d,]{4,7})", t_pipe, re.IGNORECASE)
+        idv_match = re.search(r"(?:Package Policy|Two-Whee\w*|Motor\s*Cycle)[^\d]*([\d,]{4,7})", t_pipe, re.IGNORECASE)
         if idv_match:
             idv = idv_match.group(1).strip()
 
