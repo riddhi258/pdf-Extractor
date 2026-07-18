@@ -157,4 +157,3 @@ if uploaded_files:
 st.markdown("---")
 st.caption("Built with 💙 Streamlit + PyPDF2 + Regex Extraction | Supports Tata AIG, Royal Sundaram, ICICI Lombard & more")
 
-```
