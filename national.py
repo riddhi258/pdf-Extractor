@@ -128,9 +128,8 @@ def extract_policy_details(text, file_name):
 
 
     # --- Customer ID ---
-cust_id = find(r"(?:Customer\s*ID|Client\s*ID)\s*[:\-]?\s*([0-9A-Z\/\-]+)", t)
+     cust_id = find(r"(?:Customer\s*ID|Client\s*ID)\s*[:\-]?\s*([0-9A-Z\/\-]+)", t)
 
-    # --- Customer Name Extraction Modification ---
     if allow_underscore:
         # Includes '_' inside the capturing group character class
         cust_name = find(r"(?:Insured|Customer|Policyholder|Customer Name)\s*Name\s*[:\-]?\s*([_A-Za-z\s\.\']+)", t)
