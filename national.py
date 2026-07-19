@@ -145,9 +145,7 @@ def extract_policy_details(text, file_name, allow_underscore_names):
         cust_name = find(r"(?:Insured|Customer|Policyholder|Customer Name)\s*Name\s*[:\-]?\s*([A-Za-z\s\.\']+)", t)
         cust_name = cust_name.strip().title() if cust_name != "N/A" else "N/A"
 
-
-
-    # --- Product Name ---
+   # --- Product Name ---
     if is_national:
         product = find(r"Class\s*of\s*Vehicle\s*[:\-]?\s*([A-Za-z\s\/,]+)", t)
     else:
@@ -160,8 +158,14 @@ def extract_policy_details(text, file_name, allow_underscore_names):
     if product == "N/A":
         if "national parivar mediclaim" in t.lower():
             product = "New National Parivar Mediclaim Policy"
+        elif "national mediclaim" in t.lower():
+            product = "National Mediclaim Policy"
+        elif "bharat sookshma udyam" in t.lower():
+            product = "National Bharat Sookshma Udyam Suraksha Policy"
         elif "personal accident" in t.lower():
             product = "Personal Accident Insurance (Individual) Policy"
+        else:
+            product = "Other"
 
 
     # --- Sum Insured / IDV ---
