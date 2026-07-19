@@ -63,9 +63,20 @@ def extract_policy_details(text, file_name):
     # --- Customer ID ---
     cust_id = find(r"(?:Customer\s*ID|Client\s*ID)\s*[:\-]?\s*([0-9A-Z\/\-]+)", t)
 
-    # --- Customer Name ---
-    cust_name = find(r"(?:Insured|Customer|Policyholder|Customer Name)\s*Name\s*[:\-]?\s*([A-Za-z\s\.\']+)", t)
-    cust_name = cust_name.strip().title() if cust_name != "N/A" else "N/A"
+    # --- Customer Name Extraction Modification ---
+    if allow_underscore:
+        # Includes '_' inside the capturing group character class
+        cust_name = find(r"(?:Insured|Customer|Policyholder|Customer Name)\s*Name\s*[:\-]?\s*([_A-Za-z\s\.\']+)", t)
+        if cust_name != "N/A":
+            # Strip spaces, keep underscore, title-case the actual text parts
+            cust_name = cust_name.strip()
+            if cust_name.startswith("_"):
+                cust_name = "_" + cust_name[1:].strip().title()
+            else:
+                cust_name = cust_name.title()
+    else:
+        cust_name = find(r"(?:Insured|Customer|Policyholder|Customer Name)\s*Name\s*[:\-]?\s*([A-Za-z\s\.\']+)", t)
+        cust_name = cust_name.strip().title() if cust_name != "N/A" else "N/A"
 
     # --- Product Name ---
     if is_national:
