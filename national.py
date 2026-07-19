@@ -20,7 +20,12 @@ st.title("📄 PDF Policy Extractor → Excel")
 
 st.write("Upload insurance policy PDFs (Tata AIG, Zurich Kotak, Royal Sundaram, ICICI Lombard, Reliance, National, etc.) to extract details into Excel.")
 
-
+st.sidebar.header("Extraction Settings")
+allow_underscore_names = st.sidebar.checkbox(
+    "Allow names starting with underscore (_)", 
+    value=False,
+    help="Enable this if the customer names in your PDFs are prefixed with an underscore (e.g., _John Doe)."
+)
 
 # --- File Upload ---
 
@@ -123,16 +128,22 @@ def extract_policy_details(text, file_name):
 
 
     # --- Customer ID ---
+cust_id = find(r"(?:Customer\s*ID|Client\s*ID)\s*[:\-]?\s*([0-9A-Z\/\-]+)", t)
 
-    cust_id = find(r"(?:Customer\s*ID|Client\s*ID)\s*[:\-]?\s*([0-9A-Z\/\-]+)", t)
-
-
-
-    # --- Customer Name ---
-
-    cust_name = find(r"(?:Insured|Customer|Policyholder|Customer Name)\s*Name\s*[:\-]?\s*([A-Za-z\s\.\']+)", t)
-
-    cust_name = cust_name.strip().title() if cust_name != "N/A" else "N/A"
+    # --- Customer Name Extraction Modification ---
+    if allow_underscore:
+        # Includes '_' inside the capturing group character class
+        cust_name = find(r"(?:Insured|Customer|Policyholder|Customer Name)\s*Name\s*[:\-]?\s*([_A-Za-z\s\.\']+)", t)
+        if cust_name != "N/A":
+            # Strip spaces, keep underscore, title-case the actual text parts
+            cust_name = cust_name.strip()
+            if cust_name.startswith("_"):
+                cust_name = "_" + cust_name[1:].strip().title()
+            else:
+                cust_name = cust_name.title()
+    else:
+        cust_name = find(r"(?:Insured|Customer|Policyholder|Customer Name)\s*Name\s*[:\-]?\s*([A-Za-z\s\.\']+)", t)
+        cust_name = cust_name.strip().title() if cust_name != "N/A" else "N/A"
 
 
 
