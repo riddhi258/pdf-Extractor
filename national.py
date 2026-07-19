@@ -156,9 +156,12 @@ def extract_policy_details(text, file_name, allow_underscore_names):
     if product == "N/A" and "private car" in t.lower():
         product = "Private Car Package Policy"
 
-    # Fallback option if none of the above matched
-    if product == "N/A" and "personal accident" in t.lower():
-        product = "Personal Accident Insurance (Individual) Policy"
+    # Fallback options if none of the above matched
+    if product == "N/A":
+        if "national parivar mediclaim" in t.lower():
+            product = "New National Parivar Mediclaim Policy"
+        elif "personal accident" in t.lower():
+            product = "Personal Accident Insurance (Individual) Policy"
 
 
     # --- Sum Insured / IDV ---
