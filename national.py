@@ -160,6 +160,8 @@ def extract_policy_details(text, file_name, allow_underscore_names):
             product = "New National Parivar Mediclaim Policy"
         elif "national mediclaim" in t.lower():
             product = "National Mediclaim Policy"
+        elif "bharat griha raksha" in t.lower():
+            product = "National Bharat Griha Raksha Policy"
         elif "bharat sookshma udyam" in t.lower():
             product = "National Bharat Sookshma Udyam Suraksha Policy"
         elif "personal accident" in t.lower():
