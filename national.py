@@ -21,6 +21,7 @@ st.title("📄 PDF Policy Extractor → Excel")
 st.write("Upload insurance policy PDFs (Tata AIG, Zurich Kotak, Royal Sundaram, ICICI Lombard, Reliance, National, etc.) to extract details into Excel.")
 
 st.sidebar.header("Extraction Settings")
+
 allow_underscore_names = st.sidebar.checkbox(
     "Allow names starting with underscore (_)", 
     value=False,
