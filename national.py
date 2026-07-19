@@ -148,9 +148,7 @@ def extract_policy_details(text, file_name, allow_underscore_names):
 
 
     # --- Product Name ---
-    if "personal accident" in t.lower():
-        product = "Personal Accident Insurance (Individual) Policy"
-    elif is_national:
+    if is_national:
         product = find(r"Class\s*of\s*Vehicle\s*[:\-]?\s*([A-Za-z\s\/,]+)", t)
     else:
         product = find(r"(?:Product\s*Name|Policy\s*Type|Cover\s*Type)\s*[:\-]?\s*([A-Za-z\s\-\(\)\/]+)", t)
@@ -158,6 +156,9 @@ def extract_policy_details(text, file_name, allow_underscore_names):
     if product == "N/A" and "private car" in t.lower():
         product = "Private Car Package Policy"
 
+    # Fallback option if none of the above matched
+    if product == "N/A" and "personal accident" in t.lower():
+        product = "Personal Accident Insurance (Individual) Policy"
 
 
     # --- Sum Insured / IDV ---
