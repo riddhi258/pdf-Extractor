@@ -9,7 +9,11 @@ from datetime import datetime
 st.set_page_config(page_title="PDF to Excel - Policy Extractor", layout="centered")
 st.title("📄 PDF Policy Extractor → Excel")
 st.write("Upload insurance policy PDFs (Tata AIG, Zurich Kotak, Royal Sundaram, ICICI Lombard, Reliance, National, etc.) to extract details into Excel.")
-
+allow_underscore_names = st.sidebar.checkbox(
+    "Allow names starting with underscore (_)", 
+    value=False,
+    help="Enable this if the customer names in your PDFs are prefixed with an underscore (e.g., _John Doe)."
+)
 # --- File Upload ---
 uploaded_files = st.file_uploader("Upload Policy PDFs", type=["pdf"], accept_multiple_files=True)
 
