@@ -8,12 +8,16 @@ from datetime import datetime
 # --- Streamlit Config ---
 st.set_page_config(page_title="PDF to Excel - Policy Extractor", layout="centered")
 st.title("📄 PDF Policy Extractor → Excel")
-st.write("Upload insurance policy PDFs (Tata AIG, Zurich Kotak, Royal Sundaram, ICICI Lombard, Reliance, National, etc.) to extract details into Excel.")
+st.write("Upload insurance policy PDFs to extract details into Excel.")
+
+# --- Sidebar Options ---
+st.sidebar.header("Extraction Settings")
 allow_underscore_names = st.sidebar.checkbox(
     "Allow names starting with underscore (_)", 
     value=False,
     help="Enable this if the customer names in your PDFs are prefixed with an underscore (e.g., _John Doe)."
 )
+
 # --- File Upload ---
 uploaded_files = st.file_uploader("Upload Policy PDFs", type=["pdf"], accept_multiple_files=True)
 
@@ -40,7 +44,7 @@ def format_date(date_str):
     return date_str
 
 # --- Extraction Function ---
-def extract_policy_details(text, file_name):
+def extract_policy_details(text, file_name, allow_underscore):
     t = re.sub(r'\s+', ' ', text.replace("\n", " "))
 
     # Detect National Insurance
@@ -89,52 +93,24 @@ def extract_policy_details(text, file_name):
         product = find(r"(?:Product\s*Name|Policy\s*Type|Cover\s*Type)\s*[:\-]?\s*([A-Za-z\s\-\(\)\/]+)", t)
     if product == "N/A" and "private car" in t.lower():
         product = "Private Car Package Policy"
-    else: product = find(r"(?:Product\s*Name|Policy\s*Type|Cover\s*Type)\s*[:\-]?\s*([A-Za-z\s]+)", t)
+    else: 
+        product = find(r"(?:Product\s*Name|Policy\s*Type|Cover\s*Type)\s*[:\-]?\s*([A-Za-z\s]+)", t)
 
     # --- Sum Insured / IDV ---
-         # --- Sum Insured / IDV ---
-    # Handles bilingual "वाहन का आई.डी.वी/Vehicle IDV" or "Vehicle IDV" or "Total Value"
-    idv = find(
-        r"(?:वाहन\s*का\s*आई\.डी\.वी\/Vehicle\s*IDV|Vehicle\s*IDV|Insured\s*Declared\s*Value|Sum\s*Insured)\s*[`₹:\-]?\s*([\d,\.]+)",
-        t
-    )
-
+    idv = find(r"(?:वाहन\s*का\s*आई\.डी\.वी\/Vehicle\s*IDV|Vehicle\s*IDV|Insured\s*Declared\s*Value|Sum\s*Insured)\s*[`₹:\-]?\s*([\d,\.]+)", t)
     if idv == "N/A":
         idv = find(r"Total\s*Value\s*[₹:\-\s]*([\d,\.]+)", t)
-
-    # Clean up formatting
     if idv != "N/A":
-        try:
-            idv = f"{float(idv.replace(',', '').strip()):,.2f}"
-        except:
-            pass
+        try: idv = f"{float(idv.replace(',', '').strip()):,.2f}"
+        except: pass
 
-    # --- Premium (Premium Paid Incl. GST) ---
-         # --- Premium Paid (Incl. GST) ---
-            # --- Premium Paid (Incl. GST) ---
-    # Handles "कुल राशि Total Amount" in Hindi-English mix with any spacing or hidden characters
-    premium = find(
-        r"क\s*ु\s*ल\s*र\s*ा\s*श\s*ि.*?Total\s*Amount\s*[₹`:\-\s]*([\d,.,]+)",
-        t,
-        flags=re.IGNORECASE
-    )
-
-    # If still not found, try a simpler English-only fallback
+    # --- Premium Paid (Incl. GST) ---
+    premium = find(r"क\s*ु\s*ल\s*र\s*ा\s*श\s*ि.*?Total\s*Amount\s*[₹`:\-\s]*([\d,.,]+)", t, flags=re.IGNORECASE)
     if premium == "N/A":
-        premium = find(
-            r"Total\s*Amount\s*[₹`:\-\s]*([\d,.,]+)",
-            t,
-            flags=re.IGNORECASE
-        )
-
-    # Format cleanly
+        premium = find(r"Total\s*Amount\s*[₹`:\-\s]*([\d,.,]+)", t, flags=re.IGNORECASE)
     if premium != "N/A":
-        try:
-            premium = f"{float(premium.replace(',', '').strip()):,.2f}"
-        except:
-            pass
-
-
+        try: premium = f"{float(premium.replace(',', '').strip()):,.2f}"
+        except: pass
 
     # --- Intermediary ---
     if is_national:
@@ -150,37 +126,20 @@ def extract_policy_details(text, file_name):
     if mobile != "N/A":
         mobile = mobile.replace(" ", "").replace("*", "X")
 
-    # --- Customer Email (E-Mail:) ---
-        # --- Customer Email (E-Mail:) ---
-    # Capture only the email right after "E-Mail" or "ई-मेल"
-    cust_email_match = re.search(
-        r"(?:ई[-\s]*मेल|E[-\s]*Mail)\s*[:\-]?\s*([A-Za-z0-9.*_%+/-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})",
-        t
-    )
-
+    # --- Customer Email ---
+    cust_email_match = re.search(r"(?:ई[-\s]*मेल|E[-\s]*Mail)\s*[:\-]?\s*([A-Za-z0-9.*_%+/-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})", t)
     cust_email = cust_email_match.group(1).strip() if cust_email_match else "N/A"
 
-    # Step 2: Exclude known company/service domains even if matched
-    exclude_domains = [
-        "royalsundaram.in", "tataaig.com", "reliancegeneral.co.in",
-        "icicilombard.com", "nationalinsurance.nic.co.in", "nic.co.in",
-        "kotak.com", "hdfcergo.com", "tvs.in"
-    ]
+    exclude_domains = ["royalsundaram.in", "tataaig.com", "reliancegeneral.co.in", "icicilombard.com", "nationalinsurance.nic.co.in", "nic.co.in", "kotak.com", "hdfcergo.com", "tvs.in"]
     if any(domain in cust_email.lower() for domain in exclude_domains):
-        # Fallback – look for a personal Gmail/Yahoo/Hotmail address elsewhere
-        all_emails = re.findall(
-            r"[A-Za-z0-9.*_%+/-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",
-            t
-        )
+        all_emails = re.findall(r"[A-Za-z0-9.*_%+/-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", t)
         for email in all_emails:
             if not any(domain in email.lower() for domain in exclude_domains):
                 cust_email = email
                 break
         else:
             cust_email = "N/A"
-
     cust_email = cust_email.replace(" ", "")
-
 
     # --- Fuel Type ---
     fuel = find(r"(?:Type\s*of\s*Fuel|Fuel\s*Type)\s*[:\-]?\s*([A-Za-z]+)", t)
@@ -231,7 +190,8 @@ if uploaded_files:
     for file in uploaded_files:
         reader = PdfReader(file)
         text = " ".join(page.extract_text() or "" for page in reader.pages)
-        data = extract_policy_details(text, file.name)
+        # Pass the checkbox setting down to the processing function
+        data = extract_policy_details(text, file.name, allow_underscore_names)
         data["File Name"] = file.name
         all_data.append(data)
 
@@ -253,4 +213,4 @@ if uploaded_files:
     )
 
 st.markdown("---")
-st.caption("Built with 💙 Streamlit + PyPDF2 + Regex | Supports Tata AIG, Reliance, Zurich Kotak, Royal Sundaram, ICICI Lombard & National Insurance")
+st.caption("Built with 💙 Streamlit + PyPDF2 + Regex")
