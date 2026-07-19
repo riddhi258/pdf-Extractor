@@ -23,9 +23,9 @@ st.write("Upload insurance policy PDFs (Tata AIG, Zurich Kotak, Royal Sundaram, 
 st.sidebar.header("Extraction Settings")
 
 allow_underscore_names = st.sidebar.checkbox(
-    "Allow names starting with underscore (_)", 
-    value=False,
-    help="Enable this if the customer names in your PDFs are prefixed with an underscore (e.g., _John Doe)."
+    "Allow names starting with underscore (_)", 
+    value=False,
+    help="Enable this if the customer names in your PDFs are prefixed with an underscore (e.g., _John Doe)."
 )
 
 # --- File Upload ---
