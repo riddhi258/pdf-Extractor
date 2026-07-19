@@ -488,6 +488,4 @@ if uploaded_files:
 
 
 st.markdown("---")
-
-st.caption("Built with 💙 Streamlit + PyPDF2 + Regex | Supports Tata AIG, Reliance, Zurich Kotak, Royal Sundaram, ICICI Lombard & National Insurance") add exctration name option where name start with under score 
-
+st.caption("Built with 💙 Streamlit + PyPDF2 + Regex | Supports Tata AIG, Reliance, Zurich Kotak, Royal Sundaram, ICICI Lombard & National Insurance") 
