@@ -179,7 +179,7 @@ def extract_policy_details(text, file_name, allow_underscore_names):
 
     idv = find(
 
-        r"(?:वाहन\s*का\s*आई\.डी\.वी\/Vehicle\s*IDV|Vehicle\s*IDV|Insured\s*Declared\s*Value|Sum\s*Insured)\s*[`₹:\-]?\s*([\d,\.]+)",
+        r"(?:वाहन\s*का\s*आई\.डी\.वी\/Vehicle\s*IDV|Vehicle\s*IDV|Insured\s*Declared\s*Value|Sum\s*Insured)\s*[₹:\-]?\s*([\d,\.]+)",
 
         t
 
@@ -217,7 +217,7 @@ def extract_policy_details(text, file_name, allow_underscore_names):
 
     premium = find(
 
-        r"क\s*ु\s*ल\s*र\s*ा\s*श\s*ि.*?Total\s*Amount\s*[₹`:\-\s]*([\d,.,]+)",
+        r"क\s*ु\s*ल\s*र\s*ा\s*श\s*ि.*?Total\s*Amount\s*[₹:\-\s]*([\d,.,]+)",
 
         t,
 
@@ -233,7 +233,7 @@ def extract_policy_details(text, file_name, allow_underscore_names):
 
         premium = find(
 
-            r"Total\s*Amount\s*[₹`:\-\s]*([\d,.,]+)",
+            r"Total\s*Amount\s*[₹:\-\s]*([\d,.,]+)",
 
             t,
 
@@ -350,24 +350,23 @@ def extract_policy_details(text, file_name, allow_underscore_names):
     cust_email = cust_email.replace(" ", "")
 
 
-       # --- Fuel Type ---
-    fuel = find(
-        r"(?:Type\s*of\s*Fuel|Fuel\s*Type)\s*[:\-]?\s*([A-Za-z]+)",
-        t
-    )
-
-    # --- Vehicle Info ---
-    vehicle_info = find(
-        r"(?:Make|Manufacturer)\s*[:\-]?\s*([A-Za-z0-9\s&.\-]+)",
-        t
-    )
-
-  # --- Registration Number --- 
-    reg_no = find( r"(?:Registration|Regn\.?|Vehicle)\s*(?:No\.?|Number)?\s*[:\-]?\s*([A-Z0-9\- ]+)", t ) 
-    # --- Engine / Chassis --- 
-    engine = find(r"(?:Engine\s*or\s*M\/c\s*No\.?|Engine\s*Number)\s*[:\-]?\s*([A-Z0-9\s]+)", t) 
+    # --- Fuel Type ---
+    fuel = find(r"(?:Type\s*of\s*Fuel|Fuel\s*Type)\s*[:\-]?\s*([A-Za-z]+)", t)
     
+    # --- Vehicle Info ---
+    vehicle_info = find(r"(?:Make|Manufacturer)\s*[:\-]?\s*([A-Za-z0-9\s&\.\-]+)", t)
+
+   # --- Registration Number ---
+    reg_no = find(
+        r"(?:Registration|Regn\.?|Vehicle)\s*(?:No\.?|Number)?\s*[:\-]?\s*([A-Z0-9\- ]+)",
+        t
+    )
+    # --- Engine / Chassis ---
+
+    engine = find(r"(?:Engine\s*or\s*M\/c\s*No\.?|Engine\s*Number)\s*[:\-]?\s*([A-Z0-9\s]+)", t)
+
     chassis = find(r"(?:Chassis\s*Number|Chassis\s*No\.?)\s*[:\-]?\s*([A-Z0-9\s]+)", t)
+
 
 
     # --- Payment Mode ---
@@ -485,4 +484,4 @@ if uploaded_files:
 
 
 st.markdown("---")
-st.caption("Built with 💙 Streamlit + PyPDF2 + Regex | Supports Tata AIG, Reliance, Zurich Kotak, Royal Sundaram, ICICI Lombard & National Insurance") 
+st.caption("Built with 💙 Streamlit + PyPDF2 + Regex | Supports Tata AIG, Reliance, Zurich Kotak, Royal Sundaram, ICICI Lombard & National Insurance") Error while running National extractor: unindent does not match any outer indentation level (<string>, line 355)
