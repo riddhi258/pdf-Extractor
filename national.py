@@ -358,17 +358,6 @@ def extract_policy_details(text, file_name, allow_underscore_names):
         t
     )
 
-    # Reject false matches
-    if (
-        vehicle_info == "N/A"
-        or len(vehicle_info) > 30
-        or "true statements" in vehicle_info.lower()
-        or "full disclosure" in vehicle_info.lower()
-        or "insured property" in vehicle_info.lower()
-        or "allow inspection" in vehicle_info.lower()
-    ):
-        vehicle_info = "N/A"
-
    # --- Registration Number ---
     reg_no = find(
         r"(?:Registration|Regn\.?|Vehicle)\s*(?:No\.?|Number)?\s*[:\-]?\s*([A-Z0-9\- ]+)",
