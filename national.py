@@ -362,23 +362,12 @@ def extract_policy_details(text, file_name, allow_underscore_names):
         t
     )
 
-    # --- Registration Number ---
-    reg_no = find(
-        r"(?:Registration\s*No\.?|Regn\.?\s*No\.?|Vehicle\s*No\.?)\s*[:\-]?\s*([A-Z0-9\- ]+)",
-        t
-    )
-
-    # --- Engine ---
-    engine = find(
-        r"(?:Engine\s*or\s*M\/c\s*No\.?|Engine\s*Number)\s*[:\-]?\s*([A-Z0-9\s]+)",
-        t
-    )
-
-    # --- Chassis ---
-    chassis = find(
-        r"(?:Chassis\s*Number|Chassis\s*No\.?)\s*[:\-]?\s*([A-Z0-9\s]+)",
-        t
-    )
+  # --- Registration Number --- 
+    reg_no = find( r"(?:Registration|Regn\.?|Vehicle)\s*(?:No\.?|Number)?\s*[:\-]?\s*([A-Z0-9\- ]+)", t ) 
+    # --- Engine / Chassis --- 
+    engine = find(r"(?:Engine\s*or\s*M\/c\s*No\.?|Engine\s*Number)\s*[:\-]?\s*([A-Z0-9\s]+)", t) 
+    
+    chassis = find(r"(?:Chassis\s*Number|Chassis\s*No\.?)\s*[:\-]?\s*([A-Z0-9\s]+)", t)
 
 
     # --- Payment Mode ---
