@@ -146,21 +146,20 @@ def extract_policy_details(text, file_name, allow_underscore_names):
         cust_name = cust_name.strip().title() if cust_name != "N/A" else "N/A"
 
    # --- Product Name ---
-  if is_national:
+if is_national:
     product = find(
-        r"(?:Class\s*of\s*Vehicle|Policy\s*Schedule)\s*[:\-]?\s*([A-Za-z0-9\s\/,\-\(\)&]+)",
+        r"(?:Class\s*of\s*Vehicle|Product\s*Name|Policy\s*Schedule)\s*[:\-]?\s*([A-Za-z0-9\s\/,\-&()]+)",
         t
     )
 else:
     product = find(
-        r"(?:Product\s*Name|Policy\s*Type|Cover\s*Type|Policy\s*Schedule)\s*[:\-]?\s*([A-Za-z0-9\s\-\(\)\/,&]+)",
+        r"(?:Product\s*Name|Policy\s*Type|Cover\s*Type|Policy\s*Schedule)\s*[:\-]?\s*([A-Za-z0-9\s\/,\-&()]+)",
         t
     )
 
 if product == "N/A" and "private car" in t.lower():
     product = "Private Car Package Policy"
 
-# Fallback options if none of the above matched
 if product == "N/A":
     if "national parivar mediclaim" in t.lower():
         product = "New National Parivar Mediclaim Policy"
@@ -174,8 +173,6 @@ if product == "N/A":
         product = "Personal Accident Insurance (Individual) Policy"
     else:
         product = "Other"
-
-    # --- Sum Insured / IDV ---
 
          # --- Sum Insured / IDV ---
 
