@@ -358,10 +358,11 @@ def extract_policy_details(text, file_name, allow_underscore_names):
     fuel = find(r"(?:Type\s*of\s*Fuel|Fuel\s*Type)\s*[:\-]?\s*([A-Za-z]+)", t)
 
 
-
-    # --- Vehicle Info ---
-
+# Check if the policy is for a vehicle
+if re.search(r"\b(motor\s*car|vehicle|car|two\s*wheeler|bike|motorcycle|commercial\s*vehicle|private\s*car|class\s*of\s*vehicle)\b", t, re.IGNORECASE):
     vehicle_info = find(r"(?:Make|Manufacturer)\s*[:\-]?\s*([A-Za-z0-9\s&\.\-]+)", t)
+else:
+    vehicle_info = "N/A"
 
 
 
