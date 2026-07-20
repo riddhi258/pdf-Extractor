@@ -370,8 +370,6 @@ if (
 ):
     vehicle_info = "N/A"
 
-
-
     # --- Engine / Chassis ---
 
     engine = find(r"(?:Engine\s*or\s*M\/c\s*No\.?|Engine\s*Number)\s*[:\-]?\s*([A-Z0-9\s]+)", t)
