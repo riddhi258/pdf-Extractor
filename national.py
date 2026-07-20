@@ -369,6 +369,11 @@ def extract_policy_details(text, file_name, allow_underscore_names):
     ):
         vehicle_info = "N/A"
 
+   # --- Registration Number ---
+    reg_no = find(
+        r"(?:Registration|Regn\.?|Vehicle)\s*(?:No\.?|Number)?\s*[:\-]?\s*([A-Z0-9\- ]+)",
+        t
+    )
     # --- Engine / Chassis ---
 
     engine = find(r"(?:Engine\s*or\s*M\/c\s*No\.?|Engine\s*Number)\s*[:\-]?\s*([A-Z0-9\s]+)", t)
