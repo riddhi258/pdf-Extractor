@@ -179,7 +179,7 @@ def extract_policy_details(text, file_name, allow_underscore_names):
 
     idv = find(
 
-        r"(?:वाहन\s*का\s*आई\.डी\.वी\/Vehicle\s*IDV|Vehicle\s*IDV|Insured\s*Declared\s*Value|Sum\s*Insured)\s*[₹:\-]?\s*([\d,\.]+)",
+        r"(?:वाहन\s*का\s*आई\.डी\.वी\/Vehicle\s*IDV|Vehicle\s*IDV|Insured\s*Declared\s*Value|Sum\s*Insured)\s*[`₹:\-]?\s*([\d,\.]+)",
 
         t
 
@@ -217,7 +217,7 @@ def extract_policy_details(text, file_name, allow_underscore_names):
 
     premium = find(
 
-        r"क\s*ु\s*ल\s*र\s*ा\s*श\s*ि.*?Total\s*Amount\s*[₹:\-\s]*([\d,.,]+)",
+        r"क\s*ु\s*ल\s*र\s*ा\s*श\s*ि.*?Total\s*Amount\s*[₹`:\-\s]*([\d,.,]+)",
 
         t,
 
@@ -233,7 +233,7 @@ def extract_policy_details(text, file_name, allow_underscore_names):
 
         premium = find(
 
-            r"Total\s*Amount\s*[₹:\-\s]*([\d,.,]+)",
+            r"Total\s*Amount\s*[₹`:\-\s]*([\d,.,]+)",
 
             t,
 
@@ -352,15 +352,27 @@ def extract_policy_details(text, file_name, allow_underscore_names):
 
     # --- Fuel Type ---
     fuel = find(r"(?:Type\s*of\s*Fuel|Fuel\s*Type)\s*[:\-]?\s*([A-Za-z]+)", t)
-    
-    # --- Vehicle Info ---
-    vehicle_info = find(r"(?:Make|Manufacturer)\s*[:\-]?\s*([A-Za-z0-9\s&\.\-]+)", t)
 
-   # --- Registration Number ---
+    # --- Vehicle Info ---
+    vehicle_info = "N/A"
+
+    if re.search(
+        r"\b(motor\s*car|vehicle|car|two\s*wheeler|bike|motorcycle|commercial\s*vehicle|private\s*car|class\s*of\s*vehicle)\b",
+        t,
+        re.IGNORECASE,
+    ):
+        vehicle_info = find(
+            r"(?:Make|Manufacturer)\s*:\s*([A-Za-z0-9&.\- ]{2,50})",
+            t,
+        )
+    # --- Registration Number ---
     reg_no = find(
-        r"(?:Registration|Regn\.?|Vehicle)\s*(?:No\.?|Number)?\s*[:\-]?\s*([A-Z0-9\- ]+)",
-        t
+        r"(?:Regn\.?\s*Number|Registration\s*No\.?)\s*[:\-]?\s*([A-Z]{2}[\s\-]?\d{2}[\s\-]?[A-Z]{1,2}[\s\-]?\d{4})",
+        t,
     )
+
+
+
     # --- Engine / Chassis ---
 
     engine = find(r"(?:Engine\s*or\s*M\/c\s*No\.?|Engine\s*Number)\s*[:\-]?\s*([A-Z0-9\s]+)", t)
