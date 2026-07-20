@@ -352,7 +352,8 @@ def extract_policy_details(text, file_name, allow_underscore_names):
 
     # --- Fuel Type ---
     fuel = find(r"(?:Type\s*of\s*Fuel|Fuel\s*Type)\s*[:\-]?\s*([A-Za-z]+)", t)
-        # --- Vehicle Info ---
+
+    # --- Vehicle Info ---
    vehicle_info = find(r"(?:Make|Manufacturer)\s*[:\-]?\s*([A-Za-z0-9\s&\.\-]+)", t)
 
    # --- Registration Number ---
