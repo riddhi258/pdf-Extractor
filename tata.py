@@ -9,11 +9,6 @@ st.set_page_config(page_title="PDF to Excel - Policy Extractor", layout="centere
 st.title("📄 PDF Policy Extractor → Excel")
 st.write("Upload one or more insurance policy PDFs (Tata AIG, Royal Sundaram, ICICI Lombard, etc.) to extract key details into a structured Excel file.")
 
-# --- Sidebar Configuration ---
-st.sidebar.title("🏢 Choose Insurance Company")
-company = st.sidebar.selectbox("Select the Company", ["Tata AIG", "Royal Sundaram", "ICICI Lombard", "Other"])
-st.sidebar.info(f"👉 Selected: {company}")
-
 # --- File Upload ---
 uploaded_files = st.file_uploader("Upload Policy PDFs", type=["pdf"], accept_multiple_files=True)
 
