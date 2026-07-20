@@ -350,23 +350,35 @@ def extract_policy_details(text, file_name, allow_underscore_names):
     cust_email = cust_email.replace(" ", "")
 
 
-    # --- Fuel Type ---
-    fuel = find(r"(?:Type\s*of\s*Fuel|Fuel\s*Type)\s*[:\-]?\s*([A-Za-z]+)", t)
-
-    # --- Vehicle Info ---
-   vehicle_info = find(r"(?:Make|Manufacturer)\s*[:\-]?\s*([A-Za-z0-9\s&\.\-]+)", t)
-
-   # --- Registration Number ---
-    reg_no = find(
-        r"(?:Registration|Regn\.?|Vehicle)\s*(?:No\.?|Number)?\s*[:\-]?\s*([A-Z0-9\- ]+)",
+       # --- Fuel Type ---
+    fuel = find(
+        r"(?:Type\s*of\s*Fuel|Fuel\s*Type)\s*[:\-]?\s*([A-Za-z]+)",
         t
     )
-    # --- Engine / Chassis ---
 
-    engine = find(r"(?:Engine\s*or\s*M\/c\s*No\.?|Engine\s*Number)\s*[:\-]?\s*([A-Z0-9\s]+)", t)
+    # --- Vehicle Info ---
+    vehicle_info = find(
+        r"(?:Make|Manufacturer)\s*[:\-]?\s*([A-Za-z0-9\s&.\-]+)",
+        t
+    )
 
-    chassis = find(r"(?:Chassis\s*Number|Chassis\s*No\.?)\s*[:\-]?\s*([A-Z0-9\s]+)", t)
+    # --- Registration Number ---
+    reg_no = find(
+        r"(?:Registration\s*No\.?|Regn\.?\s*No\.?|Vehicle\s*No\.?)\s*[:\-]?\s*([A-Z0-9\- ]+)",
+        t
+    )
 
+    # --- Engine ---
+    engine = find(
+        r"(?:Engine\s*or\s*M\/c\s*No\.?|Engine\s*Number)\s*[:\-]?\s*([A-Z0-9\s]+)",
+        t
+    )
+
+    # --- Chassis ---
+    chassis = find(
+        r"(?:Chassis\s*Number|Chassis\s*No\.?)\s*[:\-]?\s*([A-Z0-9\s]+)",
+        t
+    )
 
 
     # --- Payment Mode ---
