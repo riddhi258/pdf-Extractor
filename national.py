@@ -352,23 +352,22 @@ def extract_policy_details(text, file_name, allow_underscore_names):
 
     # --- Fuel Type ---
     fuel = find(r"(?:Type\s*of\s*Fuel|Fuel\s*Type)\s*[:\-]?\s*([A-Za-z]+)", t)
+        # --- Vehicle Info ---
+    vehicle_info = find(
+        r"(?:Make|Manufacturer)\s*:\s*([A-Za-z0-9&.\- ]{2,50})",
+        t
+    )
 
-   # --- Vehicle Info ---
-vehicle_info = find(
-    r"(?:Make|Manufacturer)\s*[:\-]?\s*([A-Za-z0-9\s&.\-]+)",
-    t
-)
-
-# Reject false matches
-if (
-    vehicle_info == "N/A"
-    or len(vehicle_info) > 30
-    or "true statements" in vehicle_info.lower()
-    or "full disclosure" in vehicle_info.lower()
-    or "insured property" in vehicle_info.lower()
-    or "allow inspection" in vehicle_info.lower()
-):
-    vehicle_info = "N/A"
+    # Reject false matches
+    if (
+        vehicle_info == "N/A"
+        or len(vehicle_info) > 30
+        or "true statements" in vehicle_info.lower()
+        or "full disclosure" in vehicle_info.lower()
+        or "insured property" in vehicle_info.lower()
+        or "allow inspection" in vehicle_info.lower()
+    ):
+        vehicle_info = "N/A"
 
     # --- Engine / Chassis ---
 
