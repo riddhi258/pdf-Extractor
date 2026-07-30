@@ -50,10 +50,15 @@ def extract_policy_details(text):
 
     # --- 4. Product Name ---
     product = "N/A"
-    if any(k in t_pipe for k in ["Two-Wheeler", "Two-Whee", "Motor Cycle", "Motorcycle"]):
-        product = "Two-Wheeler Package Policy"
-    elif "Private Car" in t_pipe:
-        product = "Private Car Package Policy"
+
+    if "Auto Secure - Standalone Own Damage Two Wheeler Policy" in t_pipe:
+        product = "Auto Secure - Standalone Own Damage Two Wheeler Policy"
+    elif "Auto Secure - Liability Only Policy" in t_pipe:
+            product = "Auto Secure - Liability Only Policy"
+
+    elif any(k in t_pipe for k in ["Two-Wheeler", "Two-Whee", "Motor Cycle", "Motorcycle"]):product = "Two-Wheeler Package Policy"
+
+    elif "Private Car" in t_pipe:product = "Private Car Package Policy"
 
     # --- 5. Sum Insured / IDV (Updated specifically for your text) ---
     idv = "N/A"
@@ -101,12 +106,34 @@ def extract_policy_details(text):
         engine = find(r"Engine\s*(?:No\.?|Number).*?:\s*([A-Z0-9]{10,17})", t_pipe)
 
     # Vehicle Info mapped from "Body Type : MOTOR CYCLE" or Make/Model row
-    vehicle_info = find(r"Body\s*Type\s*[:\-]?\s*([A-Za-z0-9\s\-/]+?)(?=\s*(?:Zone|Details|Total|Fuel))", t_pipe)
+    vehicle_info = find(
+    r"Body\s*Type\s*[:\-]?\s*([A-Za-z0-9\s\-/]+?)(?=\s*(?:Zone|Details|Total|Fuel))",
+    t_pipe
+    )
+
+    make_model = "N/A"   # <-- Initialize
+
     if vehicle_info == "N/A" or vehicle_info.upper() == "MOTOR CYCLE":
-        # Let's see if we can append the specific Model "HERO/GLAMOUR/FI DISC BS 6" instead of just "MOTOR CYCLE"
-        make_model = find(r"Make\s*/\s*Model\s*/\s*Variant\s*[:\-]?\s*([A-Za-z0-9\s\-/]+?)(?=\s*Fuel)", t_pipe)
-        if make_model != "N/A":
-            vehicle_info = make_model
+
+     make_model = find(
+        r"Make\s*/\s*Model\s*/\s*Variant\s*[:\-]?\s*([A-Za-z0-9\s\-/]+?)(?=\s*Fuel)",
+        t_pipe
+    )
+
+    if make_model != "N/A":vehicle_info = make_model
+    else:
+        vehicle_info = find(
+            r"(HONDA[\/]?\s*CITY\s+[A-Za-z0-9\s\-\(\)\.]+?)(?=\d{4}|\s+[A-Z]{2,}|\s+Insured|$)",
+            t_pipe
+        )
+
+        if vehicle_info == "N/A":
+            vehicle_info = find(
+                r"(?:Make\s*/\s*Model|Manufacturer\s*Model)\s*[:\-]?\s*([A-Za-z0-9\s\-\(\)\/]+)",
+                t_pipe
+            )
+
+        if vehicle_info != "N/A":vehicle_info = vehicle_info.strip()
 
     # Registration Number
     reg_no = find(r"(?:Registration\s*No\.?|Vehicle\s*No\.?|Regn\s*No\.?|Registration\s*Number)\s*[:\-]?\s*([A-Z]{2}[\s\-]?\d{2}[\s\-]?[A-Z]{1,2}[\s\-]?\d{4})", t_pipe)
