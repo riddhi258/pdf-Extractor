@@ -76,18 +76,12 @@ def extract_policy_details(text):
             # Group 1 is the Effective Date, Group 2 is the Expiry Date
             dates = [match.group(1).strip(), match.group(2).strip()]
 
-    customer_name_raw = find(
-        r"(?:Insured|Customer|Policyholder)\s*Name?\s*[:\-\s]*(.*?)(?=\s*(?:Policy\s*N|VGC|D\d+|Address|Pin\s*Code|City|State|Effective\s*Date|ID|Mobile|Vehicle|Premium|\d{10}))", 
-        text_clean
-    ).strip()
-    
-    if customer_name_raw:
-        customer_name_clean = customer_name_raw.split(',')[0].strip()  # Split on first comma and take first part
-        customer_name_clean = re.sub(r'[\d\s]+$', '', customer_name_clean).strip()  # Remove trailing numbers/spaces
-        # Remove common titles
-        customer_name_clean = re.sub(r'^(Mr\.|Mrs\.|Ms\.|Dr\.|M/s\.)\s*', '', customer_name_clean, flags=re.IGNORECASE).strip()
-    else:
-        customer_name_clean = "N/A"
+    customer_name = find(
+    r"(?:Name\s+of\s+the\s+Insured|Insured\s+Name)\s*[:\-]?\s*(.+?)(?=\s*(?:DOB|Date\s*of\s*Birth|Address|City|State|Pin\s*Code|PIN|Mobile|Phone|Email|Policy\s*No|Policy\s*Number|Vehicle|Registration|Premium|Sum\s*Insured|Effective\s*Date|Expiry\s*Date|Period\s*of\s*Insurance|Engine|Chassis|$))",
+    text_clean
+)
+
+    if not customer_name:customer_name = "N/A"
 
          # --- Special handling for CUST_EMAIL: Find all emails, exclude service/company emails ---
     all_emails = re.findall(r"([a-zA-Z0-9._%+*-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})", text_clean, re.IGNORECASE)
@@ -105,18 +99,33 @@ def extract_policy_details(text):
         ) or "N/A",
         
         # 2. Customer Name: Now with cleanup
-        "Customer Name": customer_name_clean,
+        "Customer Name": customer_name,
         
         # --- Policy Details ---
         "Policy No": policy_no, 
         
         # Effective Date - Primary search by label, then use adjacent date fallback
-        "Effective Date": find(r"(?:Effective\s*Date|from\s*Date|Date\s*of\s*Issue|Period\s*from)\s*[:\-\s]*" + DATE_REGEX, text_clean)
-                          or (dates[0] if dates else "N/A"),
-        
+        "Effective Date": (
+    find(
+        r"(?:Effective\s*Date|from\s*Date|Date\s*of\s*Issue|Period\s*from|FROM)"
+        r"\s*(?:\d{1,2}:\d{2}\s*hrs\s*on)?\s*[:\-]?\s*"
+        + DATE_REGEX,
+        text_clean
+    )
+    or (dates[0] if len(dates) > 0 else "N/A")
+    or eff_date_fallback
+),
         # Expiry Date - Primary search by label, then use adjacent date fallback
-        "Expiry Date": find(r"(?:Expiry\s*Date|to\s*Date|Valid\s*until|Period\s*to)\s*[:\-\s]*" + DATE_REGEX, text_clean)
-                       or (dates[1] if len(dates) > 1 else "N/A"),
+      "Expiry Date": (
+    find(
+        r"(?:Expiry\s*Date|to\s*Date|Valid\s*until|Period\s*to|TO)"
+        r"\s*(?:\d{1,2}:\d{2}\s*hrs\s*on)?\s*[:\-]?\s*"
+        + DATE_REGEX,
+        text_clean
+    )
+    or (dates[1] if len(dates) > 1 else "N/A")
+    or exp_date_fallback
+),
         
         # Product Name - Enhanced to capture specific policy types directly or via labels
         "Product Name": find(r"(?:Product\s*Name|Policy\s*Type|Plan\s*Name|Cover\s*Type)\s*[:\-\s]*(.*?)(?=\s*(?:Sum\s*Insured|Premium|Policy\s*N|Effective\s*Date|\d{1,3},\d{3}|Intermediary|Payment|Vehicle|Fuel|IDV|Customer|Insured))", text_clean) 
@@ -133,7 +142,10 @@ def extract_policy_details(text):
         "Premium Paid (Incl. GST)": find(r"(?:Total\s*Premium|Premium\s*Paid|Gross\s*Premium|Total\s*Amount\s*Payable)[^\d]*([\d,\.]+)\s*(?:Rs\.|USD|INR|\b)", text_clean) or "N/A",
         
         # --- Intermediary/Payment Details ---
-        "Intermediary Name": find(r"Intermediary\s*Name\s*[:\-]?\s*([A-Za-z\s\.,]+PRIVATE\s+LIMITED)", text_clean) or "N/A",
+"Intermediary Name": find(
+    r"Intermediary\s*Name\s*[:\-]?\s*([A-Za-z0-9\s&.,()\-]+?PRIVATE\s+LIMITED)",
+    text_clean
+) or "N/A",
         "Payment Mode": find(r"Payment\s*Mode\s*[:\-\s]*([A-Za-z\s]+)", text_clean) 
                         or find(r"(?:Mode\s*of\s*Payment|Payment\s*Method|Paid\s*by)\s*[:\-\s]*([A-Za-z\s]+)", text_clean) 
                         or find(r"(?:Cash|Cheque|Online|Credit\s*Card|Debit\s*Card|Net\s*Banking)", text_clean)  # Common payment modes

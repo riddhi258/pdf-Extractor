@@ -18,7 +18,7 @@ company = st.sidebar.selectbox(
 company_scripts = {
     "Tata AIG": "tata.py",
     "Royal Sundaram": "royal.py",
-    "Reliance": "reliance.py",
+    "IndusInd": "reliance.py",
     "Zurich Kotak": "kotak.py",
     "National": "national.py"
 }
