@@ -147,18 +147,33 @@ def extract_policy_details(text):
         ) or "N/A",
         
         # 2. Customer Name: Now with cleanup
-        "Customer Name": customer_name_clean,
+        "Customer Name": customer_name,
         
         # --- Policy Details ---
         "Policy No": policy_no, 
         
         # Effective Date - Primary search by label, then use adjacent date fallback
-        "Effective Date": find(r"(?:Effective\s*Date|from\s*Date|Date\s*of\s*Issue|Period\s*from)\s*[:\-\s]*" + DATE_REGEX, text_clean)
-                          or (dates[0] if dates else "N/A"),
-        
+        "Effective Date": (
+    find(
+        r"(?:Effective\s*Date|from\s*Date|Date\s*of\s*Issue|Period\s*from|FROM)"
+        r"\s*(?:\d{1,2}:\d{2}\s*hrs\s*on)?\s*[:\-]?\s*"
+        + DATE_REGEX,
+        text_clean
+    )
+    or (dates[0] if len(dates) > 0 else "N/A")
+    or eff_date_fallback
+),
         # Expiry Date - Primary search by label, then use adjacent date fallback
-        "Expiry Date": find(r"(?:Expiry\s*Date|to\s*Date|Valid\s*until|Period\s*to)\s*[:\-\s]*" + DATE_REGEX, text_clean)
-                       or (dates[1] if len(dates) > 1 else "N/A"),
+      "Expiry Date": (
+    find(
+        r"(?:Expiry\s*Date|to\s*Date|Valid\s*until|Period\s*to|TO)"
+        r"\s*(?:\d{1,2}:\d{2}\s*hrs\s*on)?\s*[:\-]?\s*"
+        + DATE_REGEX,
+        text_clean
+    )
+    or (dates[1] if len(dates) > 1 else "N/A")
+    or exp_date_fallback
+),
         
         # Product Name - Enhanced to capture specific policy types directly or via labels
         "Product Name": find(r"(?:Product\s*Name|Policy\s*Type|Plan\s*Name|Cover\s*Type)\s*[:\-\s]*(.*?)(?=\s*(?:Sum\s*Insured|Premium|Policy\s*N|Effective\s*Date|\d{1,3},\d{3}|Intermediary|Payment|Vehicle|Fuel|IDV|Customer|Insured))", text_clean) 
