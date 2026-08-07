@@ -76,18 +76,60 @@ def extract_policy_details(text):
             # Group 1 is the Effective Date, Group 2 is the Expiry Date
             dates = [match.group(1).strip(), match.group(2).strip()]
 
-    customer_name_raw = find(
-        r"(?:Insured|Customer|Policyholder)\s*Name?\s*[:\-\s]*(.*?)(?=\s*(?:Policy\s*N|VGC|D\d+|Address|Pin\s*Code|City|State|Effective\s*Date|ID|Mobile|Vehicle|Premium|\d{10}))", 
-        text_clean
-    ).strip()
-    
-    if customer_name_raw:
-        customer_name_clean = customer_name_raw.split(',')[0].strip()  # Split on first comma and take first part
-        customer_name_clean = re.sub(r'[\d\s]+$', '', customer_name_clean).strip()  # Remove trailing numbers/spaces
-        # Remove common titles
-        customer_name_clean = re.sub(r'^(Mr\.|Mrs\.|Ms\.|Dr\.|M/s\.)\s*', '', customer_name_clean, flags=re.IGNORECASE).strip()
-    else:
-        customer_name_clean = "N/A"
+    customer_name_clean = find(
+    r"(?:(?:Insured|Customer|Policyholder)\s*Name|Name\s*of\s*the\s*Insured)\s*[:\-]?\s*"
+    r"(.+?)"
+    r"(?=\s*(?:"
+    r"Mobile(?:\s*No\.?)?|"
+    r"Email(?:\s*ID)?|"
+    r"Address|"
+    r"Policy|Policy\s*No|"
+    r"Insured\s*Date\s*of\s*Birth|Date\s*of\s*Birth|"
+    r"Make\s*of\s*the\s*Vehicle|"
+    r"Model\s*Description|"
+    r"Engine\s*No\.?|"
+    r"Chassis\s*No\.?|"
+    r"Premium(?:\s*Amount)?|"
+    r"GST|"
+    r"This\s+Policy|"
+    r"Pin|City|State|"
+    r"$))",
+    text_clean,
+    flags=re.IGNORECASE | re.DOTALL
+)
+
+    print("Before:", repr(customer_name_clean))
+
+    customer_name_clean = re.sub(r'^Mr\.?\s*', 'Mr. ', customer_name_clean, flags=re.IGNORECASE)
+    customer_name_clean = re.sub(r'^Mrs\.?\s*', 'Mrs. ', customer_name_clean, flags=re.IGNORECASE)
+    customer_name_clean = re.sub(r'^Ms\.?\s*', 'Ms. ', customer_name_clean, flags=re.IGNORECASE)
+    customer_name_clean = re.sub(r'^Dr\.?\s*', 'Dr. ', customer_name_clean, flags=re.IGNORECASE)
+    customer_name_clean = re.sub(r'^M/?s\.?\s*', 'M/s. ', customer_name_clean, flags=re.IGNORECASE)
+
+    print("After:", repr(customer_name_clean))
+    # Remove any trailing fields if they were captured
+    customer_name_clean = re.split(
+        r"Mobile(?:\s*No\.?)?|"
+        r"Email(?:\s*ID)?|"
+        r"Address|"
+        r"Make\s*of\s*the\s*Vehicle|"
+        r"Model\s*Description|"
+        r"Engine\s*No\.?|"
+        r"Chassis\s*No\.?|"
+        r"Premium(?:\s*Amount)?|"
+        r"This\s+Policy|"
+        r"Insured\s*Date\s*of\s*Birth|"
+        r"Date\s*of\s*Birth",
+        customer_name_clean,
+        flags=re.IGNORECASE
+    )[0].strip()
+
+    # Take only the first line
+    customer_name_clean = customer_name_clean.split("\n")[0].strip()
+
+    # Remove anything after first comma
+    customer_name_clean = customer_name_clean.split(",")[0].strip()
+
 
          # --- Special handling for CUST_EMAIL: Find all emails, exclude service/company emails ---
     all_emails = re.findall(r"([a-zA-Z0-9._%+*-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})", text_clean, re.IGNORECASE)
@@ -133,7 +175,27 @@ def extract_policy_details(text):
         "Premium Paid (Incl. GST)": find(r"(?:Total\s*Premium|Premium\s*Paid|Gross\s*Premium|Total\s*Amount\s*Payable)[^\d]*([\d,\.]+)\s*(?:Rs\.|USD|INR|\b)", text_clean) or "N/A",
         
         # --- Intermediary/Payment Details ---
-        "Intermediary Name": find(r"Intermediary\s*Name\s*[:\-]?\s*([A-Za-z\s\.,]+PRIVATE\s+LIMITED)", text_clean) or "N/A",
+         "Intermediary Name": (
+
+    find(
+
+        r"Intermediary\s*Name\s*[:\-]?\s*([A-Za-z0-9\s&.,\-]+?(?:PRIVATE\s+LIMITED|PVT\.?\s*LTD\.?))",
+
+        text_clean
+
+    )
+
+    or find(
+
+        r"Intermediary\s*Name\s*[:\-]?\s*(.+?)(?=\s*(?:Contact|Mobile|Phone|Email|Policy|$))",
+
+        text_clean
+
+    )
+
+    or "N/A"
+
+),  
         "Payment Mode": find(r"Payment\s*Mode\s*[:\-\s]*([A-Za-z\s]+)", text_clean) 
                         or find(r"(?:Mode\s*of\s*Payment|Payment\s*Method|Paid\s*by)\s*[:\-\s]*([A-Za-z\s]+)", text_clean) 
                         or find(r"(?:Cash|Cheque|Online|Credit\s*Card|Debit\s*Card|Net\s*Banking)", text_clean)  # Common payment modes

@@ -70,10 +70,23 @@ def extract_policy_details(text, file_name):
     cust_id = find(r"Customer\s*ID\s*[:\-]?\s*([0-9A-Z]+)", t)
 
     # --- Customer Name ---
-    cust_name = find(r"Name\s*[:\-]?\s*([A-Za-z\s\.]+Agarwal)", t)
+
+ # --- Customer Name ---
+
+    cust_name = find(
+    r"Name\s*[:\-]?\s*([A-Za-z][A-Za-z\s\.&/]+?)"
+    r"(?=\s*(?:Pan\s*Number|PAN\s*No|PAN|Address|Mobile|Email|Policy|Policy\s*No|Pin|City|State|Date\s*of\s*Birth|DOB|$))",
+    t
+)
+
     if cust_name == "N/A":
-        cust_name = find(r"(?:Insured|Customer)\s*Name\s*[:\-]?\s*([A-Za-z\s\.]+)", t)
-    cust_name = cust_name.strip().title()
+     cust_name = find(
+        r"(?:Insured|Customer)\s*Name\s*[:\-]?\s*([A-Za-z][A-Za-z\s\.&/]+?)"
+        r"(?=\s*(?:Pan\s*Number|PAN\s*No|PAN|Address|Mobile|Email|Policy|Policy\s*No|Pin|City|State|Date\s*of\s*Birth|DOB|$))",
+        t
+    )
+
+    cust_name = cust_name.strip().title() if cust_name != "N/A" else "N/A"
 
     # --- Product Name ---
     if "car secure" in t.lower():
