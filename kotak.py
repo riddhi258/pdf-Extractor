@@ -144,14 +144,14 @@ def extract_policy_details(text, file_name):
     if reg_no == "N/A":
         reg_no = find(r"([A-Z]{2}[\s\-]?\d{2}[\s\-]?[A-Z]{1,2}[\s\-]?\d{4})", t)
 
-    # --- Chassis (Vehicle Chassis No.) ---
-    chassis = find(r"Vehicle\s*Chassis\s*(?:No\.?)?\s*[:\-]?\s*([A-Z0-9\s]{6,20})", t)
-    if chassis == "N/A":
-        match = re.search(
-            r"HONDA[\/]?\s*CITY.*?(\d{4})\s+[A-Z]+\s+[A-Z0-9]+\s+\d+([A-Z0-9\s]{6,20})\s+([A-Z0-9\s]{8,20})",
-            t, re.IGNORECASE)
-        if match:
-            chassis = match.group(2).strip()  # Chassis is 2nd group
+
+# 1. Vehicle Chassis No / Chassis Number
+    chassis = find(
+    r"(?:Vehicle\s*Chassis(?:\s*/\s*Trailer\s*Chassis)?\s*No\.?|"
+    r"Chassis\s*No\.?|"
+    r"Chassis\s*Number)\s*[:\-]?\s*([A-Z0-9]{10,25})",
+    t
+)
 
     # --- Engine (Engine Number) ---
     engine = find(r"Engine\s*No\.?\s*([A-Z0-9\s]{8,20})", t)

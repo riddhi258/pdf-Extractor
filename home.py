@@ -11,7 +11,7 @@ st.write("Extract policy details from PDFs for **Tata AIG**, **Royal Sundaram**,
 st.sidebar.header("🏢 Choose Insurance Company")
 company = st.sidebar.selectbox(
     "Select the Company",
-    ["Tata AIG", "Royal Sundaram", "IndusInd", "Zurich Kotak","National"]
+    ["Tata AIG", "Royal Sundaram", "IndusInd", "Zurich Kotak","National","Bajaj"]
 )
 
 # --- Map Company to Script File ---
@@ -20,7 +20,8 @@ company_scripts = {
     "Royal Sundaram": "royal.py",
     "IndusInd": "reliance.py",
     "Zurich Kotak": "kotak.py",
-    "National": "national.py"
+    "National": "national.py",
+    "Bajaj":"Bajaj.py"
 }
 
 selected_script = company_scripts[company]
