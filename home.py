@@ -33,6 +33,47 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 
+    /* Top Glassmorphic Banner */
+    .hero-banner {
+        background: linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #0284C7 100%);
+        border-radius: 20px;
+        padding: 32px 36px;
+        color: white;
+        margin-bottom: 28px;
+        box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-banner::after {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(56, 189, 248, 0.12);
+        border-radius: 50%;
+        filter: blur(60px);
+    }
+
+    .hero-title {
+        font-size: 2.1rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin: 0;
+        color: #FFFFFF !important;
+        line-height: 1.2;
+    }
+
+    .hero-subtitle {
+        color: #94A3B8;
+        font-size: 1rem;
+        margin-top: 8px;
+        margin-bottom: 0;
+        font-weight: 400;
+    }
+
     /* Sidebar Refinement */
     section[data-testid="stSidebar"] {
         background-color: #0B132B;
@@ -157,6 +198,21 @@ with st.sidebar:
     st.caption("🟢 OCR Parser v4.2: **Active**")
     st.caption("🟢 Dynamic Excel Generator: **Ready**")
 
+# --- Header Banner ---
+st.markdown(
+    f"""
+    <div class="hero-banner">
+        <h1 class="hero-title">Insurance Policy Intelligence Platform</h1>
+        <p class="hero-subtitle">Automated high-accuracy PDF extraction & key-value schema standardizer.</p>
+        <div class="badge" style="background-color: rgba(255,255,255,0.15); color: #FFFFFF; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; margin-top: 12px; display: inline-block;">
+            Active Profile: {company} Engine
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown("---")
+
 # --- Main Extractor Call ---
 run_extractor_engine(selected_cfg["script"])
-
