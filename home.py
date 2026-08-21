@@ -2,238 +2,370 @@ import streamlit as st
 import os
 import importlib.util
 import time
+import pandas as pd
 
-# --- Page Config ---
+# --- Page Setup ---
 st.set_page_config(
-    page_title="Policy AI - Multi-Company Extractor",
-    page_icon="⚡",
+    page_title="InsurData AI | Policy Extraction Platform",
+    page_icon="✨",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- Modern Custom UI Styling ---
+# --- Executive Custom CSS ---
 st.markdown("""
-    <style>
-    /* Main Layout Styling */
+<style>
+    /* Google Fonts Import */
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Main Container Padding */
     .main .block-container {
-        padding-top: 2rem;
+        padding-top: 1.5rem;
         padding-bottom: 2rem;
-        max-width: 1200px;
-    }
-    
-    /* Header Gradient Banner */
-    .header-card {
-        background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-        border-radius: 16px;
-        padding: 24px 32px;
-        color: white;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    }
-    
-    .header-card h2 {
-        margin: 0;
-        font-weight: 700;
-        letter-spacing: -0.5px;
-        color: #FFFFFF !important;
-    }
-    
-    .header-card p {
-        color: #94A3B8;
-        margin-top: 6px;
-        margin-bottom: 0;
-        font-size: 0.95rem;
+        max-width: 1350px;
     }
 
-    /* Active Provider Badge */
-    .provider-badge {
-        display: inline-block;
-        padding: 6px 14px;
+    /* Hide Default Streamlit Chrome */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+
+    /* Top Glassmorphic Banner */
+    .hero-banner {
+        background: linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #0284C7 100%);
         border-radius: 20px;
-        font-weight: 600;
-        font-size: 0.85rem;
-        margin-top: 10px;
-    }
-
-    /* Sidebar Refinements */
-    section[data-testid="stSidebar"] {
-        background-color: #F8FAFC;
-        border-right: 1px solid #E2E8F0;
+        padding: 32px 36px;
+        color: white;
+        margin-bottom: 28px;
+        box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+        position: relative;
+        overflow: hidden;
     }
     
-    /* Utility Container Styling */
-    .info-card {
-        background-color: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    .hero-banner::after {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(56, 189, 248, 0.12);
+        border-radius: 50%;
+        filter: blur(60px);
     }
-    </style>
+
+    .hero-title {
+        font-size: 2.1rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin: 0;
+        color: #FFFFFF !important;
+        line-height: 1.2;
+    }
+
+    .hero-subtitle {
+        color: #94A3B8;
+        font-size: 1rem;
+        margin-top: 8px;
+        margin-bottom: 0;
+        font-weight: 400;
+    }
+
+    /* Premium Metric Card */
+    .glass-card {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
+        transition: all 0.2s ease-in-out;
+    }
+
+    .glass-card:hover {
+        border-color: #CBD5E1;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748B;
+    }
+
+    .card-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0F172A;
+        margin-top: 4px;
+    }
+
+    /* Custom Engine Badge */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        margin-top: 14px;
+    }
+
+    /* Tab Custom Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        border-bottom: 1px solid #E2E8F0;
+        padding-bottom: 4px;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        height: 44px;
+        white-space: pre;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #64748B;
+        padding: 0 16px;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background-color: #F1F5F9 !important;
+        color: #0F172A !important;
+    }
+
+    /* Sidebar Refinement */
+    section[data-testid="stSidebar"] {
+        background-color: #0B132B;
+        border-right: 1px solid #1E293B;
+    }
+    
+    section[data-testid="stSidebar"] * {
+        color: #F8FAFC !important;
+    }
+
+    section[data-testid="stSidebar"] .stSelectbox label {
+        color: #94A3B8 !important;
+        font-weight: 600;
+    }
+</style>
 """, unsafe_allow_html=True)
 
-# --- Configuration & Brand Mapping ---
+# --- Configuration Directory ---
 COMPANY_CONFIG = {
     "Tata AIG": {
-        "script": "tata.py", 
-        "color": "#1E40AF", 
-        "bg": "#EFF6FF", 
-        "fields": ["Policy No", "Insured Name", "Insured Amount", "Expiry Date"]
+        "script": "tata.py",
+        "primary": "#2563EB",
+        "light_bg": "#EFF6FF",
+        "text": "#1E40AF",
+        "icon": "🛡️",
+        "fields": ["Policy No", "Insured Name", "Insured Amount", "Expiry Date", "Premium Total"]
     },
     "Royal Sundaram": {
-        "script": "royal.py", 
-        "color": "#0369A1", 
-        "bg": "#F0F9FF", 
-        "fields": ["Policy No", "Vehicle No", "Premium Amount", "NCB %"]
+        "script": "royal.py",
+        "primary": "#0284C7",
+        "light_bg": "#F0F9FF",
+        "text": "#0369A1",
+        "icon": "🦁",
+        "fields": ["Policy No", "Vehicle Registration", "IDV Value", "NCB %", "GST Tax"]
     },
     "Zurich Kotak": {
-        "script": "kotak.py", 
-        "color": "#B91C1C", 
-        "bg": "#FEF2F2", 
-        "fields": ["Policy No", "Customer ID", "Gross Premium", "Agent Code"]
+        "script": "kotak.py",
+        "primary": "#DC2626",
+        "light_bg": "#FEF2F2",
+        "text": "#B91C1C",
+        "icon": "🟥",
+        "fields": ["Policy No", "Customer ID", "Gross Premium", "Agent Code", "Term Duration"]
     },
     "National": {
-        "script": "national.py", 
-        "color": "#047857", 
-        "bg": "#ECFDF5", 
-        "fields": ["Policy No", "Office Code", "Sum Insured", "GST Details"]
+        "script": "national.py",
+        "primary": "#059669",
+        "light_bg": "#ECFDF5",
+        "text": "#047857",
+        "icon": "🏛️",
+        "fields": ["Policy No", "Branch Code", "Sum Insured", "Nominee Details", "Issuance Date"]
     }
 }
 
-# --- Sidebar Controls ---
+# --- Sidebar Component ---
 with st.sidebar:
-    st.title("⚡ Engine Hub")
-    st.caption("Select your extraction profile below")
+    st.markdown("### ✨ InsurData AI")
+    st.caption("Enterprise Policy Parsing Studio")
+    st.markdown("---")
     
     company = st.selectbox(
-        "Insurance Provider",
+        "Select Extraction Engine",
         list(COMPANY_CONFIG.keys()),
         index=0
     )
     
     selected_cfg = COMPANY_CONFIG[company]
     
-    st.markdown("---")
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    # Active Provider Card
+    # Active Engine Card in Sidebar
     st.markdown(
         f"""
-        <div style="background-color: {selected_cfg['bg']}; border: 1px solid {selected_cfg['color']}30; padding: 16px; border-radius: 12px;">
-            <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748B; font-weight: 600;">Selected Engine</span>
-            <h4 style="color: {selected_cfg['color']}; margin: 4px 0 0 0; font-weight: 700;">{company}</h4>
-            <p style="font-size: 0.8rem; color: #475569; margin-top: 8px;">Target Script: <code>{selected_cfg['script']}</code></p>
+        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 16px; border-radius: 12px;">
+            <div style="font-size: 0.7rem; color: #94A3B8; font-weight: 700; text-transform: uppercase;">Active Driver</div>
+            <div style="font-size: 1.1rem; font-weight: 700; margin-top: 4px; color: #FFFFFF;">
+                {selected_cfg['icon']} {company}
+            </div>
+            <div style="font-size: 0.75rem; color: #64748B; margin-top: 8px;">
+                Mapped File: <code style="color: #38BDF8; background: transparent;">{selected_cfg['script']}</code>
+            </div>
         </div>
-        """, 
+        """,
         unsafe_allow_html=True
     )
     
-    st.markdown("---")
-    st.markdown("##### ⚙️ System Status")
-    st.caption("🟢 Dynamic Parser Engine: **Ready**")
-    st.caption("🟢 Excel Export Engine: **Active**")
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("##### ⚡ Core Engines")
+    st.caption("🟢 OCR Parser v4.2: **Active**")
+    st.caption("🟢 Dynamic Excel Generator: **Ready**")
 
-# --- Main Interface ---
-# Top Header Banner
+# --- Header Banner ---
 st.markdown(
     f"""
-    <div class="header-card">
-        <h2>📄 Insurance Policy Data Extractor</h2>
-        <p>Convert structured and semi-structured PDF policy documents into standardized Excel reports.</p>
-        <div class="provider-badge" style="background-color: {selected_cfg['color']}20; color: {selected_cfg['color']}; border: 1px solid {selected_cfg['color']}40;">
-            Active Engine: {company}
+    <div class="hero-banner">
+        <h1 class="hero-title">Insurance Policy Intelligence Platform</h1>
+        <p class="hero-subtitle">Automated high-accuracy PDF extraction & key-value schema standardizer.</p>
+        <div class="badge" style="background-color: rgba(255,255,255,0.15); color: #FFFFFF; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
+            Active Profile: {company} Engine
         </div>
     </div>
     """,
     unsafe_allow_html=True
 )
 
-# Workspace Navigation Tabs
-tab_extract, tab_fields, tab_history = st.tabs([
+# --- Top Key Metrics Row ---
+col_m1, col_m2, col_m3 = st.columns(3)
+
+with col_m1:
+    st.markdown(
+        f"""
+        <div class="glass-card">
+            <div class="card-label">Active Provider Profile</div>
+            <div class="card-value" style="color: {selected_cfg['primary']};">{company}</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with col_m2:
+    st.markdown(
+        f"""
+        <div class="glass-card">
+            <div class="card-label">Target Extraction Fields</div>
+            <div class="card-value">{len(selected_cfg['fields'])} Parameters</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with col_m3:
+    st.markdown(
+        f"""
+        <div class="glass-card">
+            <div class="card-label">Export Format Config</div>
+            <div class="card-value">Excel (.xlsx)</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# --- Navigation Tabs ---
+tab_console, tab_schema, tab_audit = st.tabs([
     "🚀 Processing Console", 
-    "📋 Field Schemas", 
-    "🕒 Recent Activity"
+    "📐 Schema Inspector", 
+    "📊 Batch Analytics & Audit"
 ])
 
-# --- TAB 1: Main Extractor Console ---
-with tab_extract:
-    col_upload, col_summary = st.columns([2, 1])
+# --- TAB 1: Main Extractor Studio ---
+with tab_console:
+    left_col, right_col = st.columns([1.8, 1])
     
-    with col_upload:
-        st.subheader("Upload PDF Documents")
+    with left_col:
+        st.subheader("Upload Policy Documents")
         uploaded_files = st.file_uploader(
-            f"Drop files for {company}",
+            f"Select or drop {company} PDFs here",
             type=["pdf"],
             accept_multiple_files=True,
-            help="Supported document formats: Native digital PDFs"
+            help="Upload native digital PDF policy documents."
         )
     
-    with col_summary:
-        st.subheader("Batch Summary")
+    with right_col:
+        st.subheader("Batch Control Panel")
         file_count = len(uploaded_files) if uploaded_files else 0
         
-        m_col1, m_col2 = st.columns(2)
-        m_col1.metric("Selected Engine", company)
-        m_col2.metric("Queued Files", file_count)
-        
-        if uploaded_files:
-            st.success("✅ Files queued and ready for processing.")
-        else:
-            st.info("ℹ️ Upload one or more PDFs to unlock extraction.")
+        st.markdown(
+            f"""
+            <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 18px; border-radius: 12px; margin-bottom: 15px;">
+                <div style="font-size: 0.85rem; color: #64748B;">Queued Files: <strong style="color: #0F172A;">{file_count} PDF(s)</strong></div>
+                <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px;">Engine Status: <strong style="color: #059669;">Ready for execution</strong></div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     st.markdown("---")
 
-    # --- Script Loader Logic ---
+    # --- Safe Script Module Loading ---
     script_path = selected_cfg["script"]
 
     if os.path.exists(script_path):
         try:
-            # Safely import the module without polluting global scope
             spec = importlib.util.spec_from_file_location("company_module", script_path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
-            # Execution hook
+            # Pass uploaded files directly into child scripts if supported
             if hasattr(module, "main"):
                 module.main(uploaded_files)
             elif hasattr(module, "extract"):
                 module.extract(uploaded_files)
             else:
-                st.warning(f"⚠️ `{script_path}` loaded, but no standard `main()` or `extract()` entry point was detected.")
+                st.info(f"ℹ️ Engine `{script_path}` loaded. Add a `main(uploaded_files)` function to trigger execution.")
 
         except Exception as e:
-            st.error(f"❌ Execution error inside `{script_path}`:")
+            st.error(f"❌ Execution Exception inside `{script_path}`:")
             st.exception(e)
     else:
-        st.error(f"❌ Extractor script missing: Could not find `{script_path}` in working directory.")
+        st.warning(f"⚠️ Missing Extractor Module: Script file `{script_path}` was not found in the current root folder.")
 
-# --- TAB 2: Schema / Field Mapping ---
-with tab_fields:
-    st.subheader(f"Data Schema for {company}")
-    st.write("This provider engine is configured to automatically parse and format the following metadata attributes:")
+# --- TAB 2: Schema Inspector ---
+with tab_schema:
+    st.subheader(f"Configured Extraction Schema for {company}")
+    st.caption("The engine automatically parses, cleans, and standardizes these target parameters:")
     
     cols = st.columns(len(selected_cfg["fields"]))
     for idx, field in enumerate(selected_cfg["fields"]):
         with cols[idx]:
             st.markdown(
                 f"""
-                <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 14px; border-radius: 8px; text-align: center;">
-                    <span style="font-size: 0.8rem; color: #64748B;">Target Field</span><br>
-                    <strong style="color: #0F172A;">{field}</strong>
+                <div style="background-color: {selected_cfg['light_bg']}; border: 1px solid {selected_cfg['primary']}20; padding: 16px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 0.7rem; color: {selected_cfg['text']}; font-weight: 700; text-transform: uppercase;">Field {idx+1}</div>
+                    <div style="font-size: 0.95rem; font-weight: 700; color: #0F172A; margin-top: 4px;">{field}</div>
                 </div>
-                """, 
+                """,
                 unsafe_allow_html=True
             )
 
-# --- TAB 3: Recent Activity (Placeholder UI) ---
-with tab_history:
-    st.subheader("Session History")
-    st.caption("Track previously generated reports from this session.")
+# --- TAB 3: Batch Audit Logs ---
+with tab_audit:
+    st.subheader("Session Activity Log")
+    st.caption("Audit record of parsed batches in this session.")
     
-    st.dataframe(
-        [
-            {"Timestamp": "10:42 AM", "Engine": "Tata AIG", "Files Processed": 4, "Status": "Completed"},
-            {"Timestamp": "11:15 AM", "Engine": "Zurich Kotak", "Files Processed": 2, "Status": "Completed"},
-        ],
-        use_container_width=True
-    )
+    sample_data = pd.DataFrame([
+        {"Timestamp": "10:42:15 AM", "Company": "Tata AIG", "Files Processed": 4, "Status": "Success", "Export Size": "24 KB"},
+        {"Timestamp": "11:15:02 AM", "Company": "Zurich Kotak", "Files Processed": 2, "Status": "Success", "Export Size": "12 KB"},
+        {"Timestamp": "02:04:30 PM", "Company": "Royal Sundaram", "Files Processed": 8, "Status": "Success", "Export Size": "48 KB"},
+    ])
+    
+    st.dataframe(sample_data, use_container_width=True)
