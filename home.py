@@ -205,7 +205,7 @@ st.markdown(
         <h1 class="hero-title">Insurance Policy Intelligence Platform</h1>
         <p class="hero-subtitle">Automated high-accuracy PDF extraction & key-value schema standardizer.</p>
         <div class="badge" style="background-color: rgba(255,255,255,0.15); color: #FFFFFF; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; margin-top: 12px; display: inline-block;">
-            Active Profile: {company} Engine
+            Active Profile: {company} Pdf
         </div>
     </div>
     """,
