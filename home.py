@@ -219,9 +219,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- Engine Console Header ---
-st.subheader(f"Engine Console: {company}")
-
 # --- File Uploader ---
 uploaded_files = st.file_uploader(
     f"Select or drop {company} PDFs here",
