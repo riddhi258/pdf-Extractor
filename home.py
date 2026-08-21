@@ -1,11 +1,3 @@
-The provided snippet has two operational errors:
-
-1. **Undefined Variable:** `files` is referenced in the status `div` before any file uploader defines `uploaded_files`.
-2. **Missing Uploader Widget:** The `st.file_uploader` control was missing from the main body layout.
-
-Here is the clean, fixed script with the file uploader restored and the status card bound directly to `uploaded_files`:
-
-```python
 import streamlit as st
 import os
 import importlib.util
@@ -251,5 +243,3 @@ st.markdown("---")
 
 # --- Engine Dispatcher Call ---
 run_extractor_engine(selected_cfg["script"], uploaded_files)
-
-```
