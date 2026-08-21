@@ -1,8 +1,3 @@
-Here is the updated code where the file status banner (**"Queued Files: X PDF(s)"** and **"Engine Status: Ready for execution"**) is moved directly into the mediator engine (`run_extractor_engine`).
-
-It now executes safely inside the engine check logic only when files are actually present.
-
-```python
 import streamlit as st
 import os
 import importlib.util
@@ -252,5 +247,3 @@ st.markdown("---")
 
 # --- Engine Dispatcher Call ---
 run_extractor_engine(selected_cfg["script"], uploaded_files)
-
-```
