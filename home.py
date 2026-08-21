@@ -151,11 +151,7 @@ def run_extractor_engine(script_path: str):
             module.extract()
         elif hasattr(module, "run"):
             module.run()
-        else:
-            st.info(
-                f"ℹ️ Engine `{script_path}` loaded successfully. "
-                f"Implement a `main()`, `extract()`, or `run()` function in your script."
-            )
+       
 
     except Exception as e:
         st.error(f"❌ Execution Exception inside `{script_path}`:")
