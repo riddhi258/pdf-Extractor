@@ -211,7 +211,7 @@ st.markdown(
     <div class="hero-banner">
         <h1 class="hero-title">Insurance Policy Intelligence Platform</h1>
         <p class="hero-subtitle">Automated high-accuracy PDF extraction & key-value schema standardizer.</p>
-        <div class="badge" style="background-color: rgba(255,255,255,0.15); color: #FFFFFF; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
+        <div class="badge">
             Active Profile: {company} Engine
         </div>
     </div>
@@ -219,25 +219,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- Primary File Uploader ---
-uploaded_files = st.file_uploader(
-    f"Select or drop {company} PDFs here",
-    type=["pdf"],
-    accept_multiple_files=True,
-    help="Upload native digital PDF policy documents."
-)
-
-# --- Status Div in Main Layout ---
-file_count = len(uploaded_files) if uploaded_files else 0
-st.markdown(
-    f"""
-    <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 18px; border-radius: 12px; margin-top: 16px; margin-bottom: 20px;">
-        <div style="font-size: 0.85rem; color: #64748B;">Queued Files: <strong style="color: #0F172A;">{file_count} PDF(s)</strong></div>
-        <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px;">Engine Status: <strong style="color: #059669;">Ready for execution</strong></div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
 
 st.markdown("---")
 
