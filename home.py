@@ -137,19 +137,6 @@ def run_extractor_engine(script_path: str, files: list):
         st.warning(f"⚠️ Missing Extractor Module: Script file `{script_path}` was not found in the current root folder.")
         return
 
-    # Render execution status container safely inside mediator when files exist
-    if files:
-        file_count = len(files)
-        st.markdown(
-            f"""
-            <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 18px; border-radius: 12px; margin-bottom: 20px;">
-                <div style="font-size: 0.85rem; color: #64748B;">Queued Files: <strong style="color: #0F172A;">{file_count} PDF(s)</strong></div>
-                <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px;">Engine Status: <strong style="color: #059669;">Ready for execution</strong></div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
     try:
         # Dynamic import resolution
         module_name = os.path.splitext(os.path.basename(script_path))[0]
@@ -235,12 +222,24 @@ st.markdown(
 # --- Engine Console Header ---
 st.subheader(f"Engine Console: {company}")
 
-# --- Clean Upload Component ---
+# --- File Uploader ---
 uploaded_files = st.file_uploader(
     f"Select or drop {company} PDFs here",
     type=["pdf"],
     accept_multiple_files=True,
     help="Upload native digital PDF policy documents."
+)
+
+# --- Status Div in Main Layout ---
+file_count = len(uploaded_files) if uploaded_files else 0
+st.markdown(
+    f"""
+    <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 18px; border-radius: 12px; margin-top: 16px; margin-bottom: 20px;">
+        <div style="font-size: 0.85rem; color: #64748B;">Queued Files: <strong style="color: #0F172A;">{file_count} PDF(s)</strong></div>
+        <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px;">Engine Status: <strong style="color: #059669;">Ready for execution</strong></div>
+    </div>
+    """,
+    unsafe_allow_html=True
 )
 
 st.markdown("---")
