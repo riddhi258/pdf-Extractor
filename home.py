@@ -1,3 +1,8 @@
+Here is the updated code where the file status banner (**"Queued Files: X PDF(s)"** and **"Engine Status: Ready for execution"**) is moved directly into the mediator engine (`run_extractor_engine`).
+
+It now executes safely inside the engine check logic only when files are actually present.
+
+```python
 import streamlit as st
 import os
 import importlib.util
@@ -74,48 +79,6 @@ st.markdown("""
         font-weight: 400;
     }
 
-    /* Premium Metric Card */
-    .glass-card {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 16px;
-        padding: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
-        transition: all 0.2s ease-in-out;
-    }
-
-    .glass-card:hover {
-        border-color: #CBD5E1;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-    }
-
-    .card-label {
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #64748B;
-    }
-
-    .card-value {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #0F172A;
-        margin-top: 4px;
-    }
-
-    /* Custom Engine Badge */
-    .badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 12px;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-        margin-top: 14px;
-    }
-
     /* Sidebar Refinement */
     section[data-testid="stSidebar"] {
         background-color: #0B132B;
@@ -178,6 +141,19 @@ def run_extractor_engine(script_path: str, files: list):
     if not os.path.exists(script_path):
         st.warning(f"⚠️ Missing Extractor Module: Script file `{script_path}` was not found in the current root folder.")
         return
+
+    # Render execution status container safely inside mediator when files exist
+    if files:
+        file_count = len(files)
+        st.markdown(
+            f"""
+            <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 18px; border-radius: 12px; margin-bottom: 20px;">
+                <div style="font-size: 0.85rem; color: #64748B;">Queued Files: <strong style="color: #0F172A;">{file_count} PDF(s)</strong></div>
+                <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px;">Engine Status: <strong style="color: #059669;">Ready for execution</strong></div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     try:
         # Dynamic import resolution
@@ -264,30 +240,17 @@ st.markdown(
 # --- Engine Console Header ---
 st.subheader(f"Engine Console: {company}")
 
-# --- Primary Single File Uploader Panel ---
-left_col, right_col = st.columns([1.8, 1])
-
-with left_col:
-    uploaded_files = st.file_uploader(
-        f"Select or drop {company} PDFs here",
-        type=["pdf"],
-        accept_multiple_files=True,
-        help="Upload native digital PDF policy documents."
-    )
-
-with right_col:
-    file_count = len(uploaded_files) if uploaded_files else 0
-    st.markdown(
-        f"""
-        <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 18px; border-radius: 12px; margin-top: 28px;">
-            <div style="font-size: 0.85rem; color: #64748B;">Queued Files: <strong style="color: #0F172A;">{file_count} PDF(s)</strong></div>
-            <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px;">Engine Status: <strong style="color: #059669;">Ready for execution</strong></div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+# --- Clean Upload Component ---
+uploaded_files = st.file_uploader(
+    f"Select or drop {company} PDFs here",
+    type=["pdf"],
+    accept_multiple_files=True,
+    help="Upload native digital PDF policy documents."
+)
 
 st.markdown("---")
 
 # --- Engine Dispatcher Call ---
 run_extractor_engine(selected_cfg["script"], uploaded_files)
+
+```
