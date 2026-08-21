@@ -205,19 +205,6 @@ with st.sidebar:
     st.caption("🟢 OCR Parser v4.2: **Active**")
     st.caption("🟢 Dynamic Excel Generator: **Ready**")
 
-# --- Header Banner ---
-st.markdown(
-    f"""
-    <div class="hero-banner">
-        <h1 class="hero-title">Insurance Policy Intelligence Platform</h1>
-        <p class="hero-subtitle">Automated high-accuracy PDF extraction & key-value schema standardizer.</p>
-        <div class="badge">
-            Active Profile: {company} Engine
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
 
-
-st.markdown("---")
+# --- Engine Dispatcher Call ---
+run_extractor_engine(selected_cfg["script"])
