@@ -50,4 +50,4 @@ if os.path.exists(selected_script):
     except Exception as e:
         st.error(f"❌ Error while running {company} extractor: {e}")
 else:
-    st.error(f"Extractor file not found: {selected_script}") make better ui according to this code 
+    st.error(f"Extractor file not found: {selected_script}")
