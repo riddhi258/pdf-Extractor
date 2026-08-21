@@ -15,46 +15,30 @@ st.set_page_config(
 # --- Executive Custom CSS ---
 st.markdown("""
 <style>
-    /* Google Fonts Import */
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    /* Main Container Padding */
     .main .block-container {
         padding-top: 1.5rem;
         padding-bottom: 2rem;
         max-width: 1350px;
     }
 
-    /* Hide Default Streamlit Chrome */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* Top Glassmorphic Banner */
     .hero-banner {
         background: linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #0284C7 100%);
         border-radius: 20px;
         padding: 32px 36px;
         color: white;
-        margin-bottom: 28px;
-        box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+        margin-bottom: 24px;
+        box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15);
         position: relative;
         overflow: hidden;
-    }
-    
-    .hero-banner::after {
-        content: "";
-        position: absolute;
-        top: -50%;
-        right: -10%;
-        width: 300px;
-        height: 300px;
-        background: rgba(56, 189, 248, 0.12);
-        border-radius: 50%;
-        filter: blur(60px);
     }
 
     .hero-title {
@@ -74,19 +58,12 @@ st.markdown("""
         font-weight: 400;
     }
 
-    /* Premium Metric Card */
     .glass-card {
         background: #FFFFFF;
         border: 1px solid #E2E8F0;
         border-radius: 16px;
         padding: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
-        transition: all 0.2s ease-in-out;
-    }
-
-    .glass-card:hover {
-        border-color: #CBD5E1;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
     }
 
     .card-label {
@@ -104,7 +81,6 @@ st.markdown("""
         margin-top: 4px;
     }
 
-    /* Custom Engine Badge */
     .badge {
         display: inline-flex;
         align-items: center;
@@ -112,11 +88,9 @@ st.markdown("""
         border-radius: 9999px;
         font-size: 0.75rem;
         font-weight: 700;
-        letter-spacing: 0.02em;
         margin-top: 14px;
     }
 
-    /* Tab Custom Styling */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
         border-bottom: 1px solid #E2E8F0;
@@ -125,7 +99,6 @@ st.markdown("""
 
     .stTabs [data-baseweb="tab"] {
         height: 44px;
-        white-space: pre;
         border-radius: 10px;
         font-weight: 600;
         font-size: 0.9rem;
@@ -138,7 +111,6 @@ st.markdown("""
         color: #0F172A !important;
     }
 
-    /* Sidebar Refinement */
     section[data-testid="stSidebar"] {
         background-color: #0B132B;
         border-right: 1px solid #1E293B;
@@ -146,11 +118,6 @@ st.markdown("""
     
     section[data-testid="stSidebar"] * {
         color: #F8FAFC !important;
-    }
-
-    section[data-testid="stSidebar"] .stSelectbox label {
-        color: #94A3B8 !important;
-        font-weight: 600;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -191,7 +158,7 @@ COMPANY_CONFIG = {
     }
 }
 
-# --- Sidebar Component ---
+# --- Sidebar ---
 with st.sidebar:
     st.markdown("### ✨ InsurData AI")
     st.caption("Enterprise Policy Parsing Studio")
@@ -206,8 +173,6 @@ with st.sidebar:
     selected_cfg = COMPANY_CONFIG[company]
     
     st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Active Engine Card in Sidebar
     st.markdown(
         f"""
         <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 16px; border-radius: 12px;">
@@ -222,11 +187,6 @@ with st.sidebar:
         """,
         unsafe_allow_html=True
     )
-    
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("##### ⚡ Core Engines")
-    st.caption("🟢 OCR Parser v4.2: **Active**")
-    st.caption("🟢 Dynamic Excel Generator: **Ready**")
 
 # --- Header Banner ---
 st.markdown(
@@ -234,22 +194,35 @@ st.markdown(
     <div class="hero-banner">
         <h1 class="hero-title">Insurance Policy Intelligence Platform</h1>
         <p class="hero-subtitle">Automated high-accuracy PDF extraction & key-value schema standardizer.</p>
-        <div class="badge" style="background-color: rgba(255,255,255,0.15); color: #FFFFFF; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
-            Active Profile: {company} Engine
+        <div class="badge" style="background-color: rgba(255,255,255,0.15); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.2);">
+            Active Engine: {company} Profile
         </div>
     </div>
     """,
     unsafe_allow_html=True
 )
 
-# --- Top Key Metrics Row ---
+# --- TOP LEVEL SINGLE FILE UPLOADER ---
+st.subheader("📂 Document Upload Zone")
+uploaded_files = st.file_uploader(
+    f"Upload PDF policies for {company}",
+    type=["pdf"],
+    accept_multiple_files=True,
+    help="Upload native digital PDF policy documents here once. All modules below will use these files."
+)
+
+file_count = len(uploaded_files) if uploaded_files else 0
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# --- Top Metrics Row ---
 col_m1, col_m2, col_m3 = st.columns(3)
 
 with col_m1:
     st.markdown(
         f"""
         <div class="glass-card">
-            <div class="card-label">Active Provider Profile</div>
+            <div class="card-label">Active Provider</div>
             <div class="card-value" style="color: {selected_cfg['primary']};">{company}</div>
         </div>
         """,
@@ -260,8 +233,8 @@ with col_m2:
     st.markdown(
         f"""
         <div class="glass-card">
-            <div class="card-label">Target Extraction Fields</div>
-            <div class="card-value">{len(selected_cfg['fields'])} Parameters</div>
+            <div class="card-label">Queued Documents</div>
+            <div class="card-value">{file_count} File(s)</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -271,8 +244,8 @@ with col_m3:
     st.markdown(
         f"""
         <div class="glass-card">
-            <div class="card-label">Export Format Config</div>
-            <div class="card-value">Excel (.xlsx)</div>
+            <div class="card-label">Schema Parameters</div>
+            <div class="card-value">{len(selected_cfg['fields'])} Fields</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -289,34 +262,16 @@ tab_console, tab_schema, tab_audit = st.tabs([
 
 # --- TAB 1: Main Extractor Studio ---
 with tab_console:
-    left_col, right_col = st.columns([1.8, 1])
+    st.subheader(f"Engine Console: {company}")
     
-    with left_col:
-        st.subheader("Upload Policy Documents")
-        uploaded_files = st.file_uploader(
-            f"Select or drop {company} PDFs here",
-            type=["pdf"],
-            accept_multiple_files=True,
-            help="Upload native digital PDF policy documents."
-        )
-    
-    with right_col:
-        st.subheader("Batch Control Panel")
-        file_count = len(uploaded_files) if uploaded_files else 0
+    if not uploaded_files:
+        st.info("👆 Please upload policy PDFs in the upload zone above to unlock processing.")
+    else:
+        st.success(f"✅ {file_count} file(s) loaded and ready for execution.")
         
-        st.markdown(
-            f"""
-            <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 18px; border-radius: 12px; margin-bottom: 15px;">
-                <div style="font-size: 0.85rem; color: #64748B;">Queued Files: <strong style="color: #0F172A;">{file_count} PDF(s)</strong></div>
-                <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px;">Engine Status: <strong style="color: #059669;">Ready for execution</strong></div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
     st.markdown("---")
 
-    # --- Safe Script Module Loading ---
+    # Safe Module Execution
     script_path = selected_cfg["script"]
 
     if os.path.exists(script_path):
@@ -325,24 +280,24 @@ with tab_console:
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
-            # Pass uploaded files directly into child scripts if supported
+            # Execution call
             if hasattr(module, "main"):
                 module.main(uploaded_files)
             elif hasattr(module, "extract"):
                 module.extract(uploaded_files)
             else:
-                st.info(f"ℹ️ Engine `{script_path}` loaded. Add a `main(uploaded_files)` function to trigger execution.")
+                st.info(f"ℹ️ Engine `{script_path}` ready. Ensure it contains a `main(uploaded_files)` function.")
 
         except Exception as e:
-            st.error(f"❌ Execution Exception inside `{script_path}`:")
+            st.error(f"❌ Execution error inside `{script_path}`:")
             st.exception(e)
     else:
-        st.warning(f"⚠️ Missing Extractor Module: Script file `{script_path}` was not found in the current root folder.")
+        st.warning(f"⚠️ Missing script file: `{script_path}` not found in root directory.")
 
 # --- TAB 2: Schema Inspector ---
 with tab_schema:
-    st.subheader(f"Configured Extraction Schema for {company}")
-    st.caption("The engine automatically parses, cleans, and standardizes these target parameters:")
+    st.subheader(f"Configured Schema: {company}")
+    st.caption("The engine automatically parses and standardizes these target parameters:")
     
     cols = st.columns(len(selected_cfg["fields"]))
     for idx, field in enumerate(selected_cfg["fields"]):
@@ -360,12 +315,46 @@ with tab_schema:
 # --- TAB 3: Batch Audit Logs ---
 with tab_audit:
     st.subheader("Session Activity Log")
-    st.caption("Audit record of parsed batches in this session.")
     
     sample_data = pd.DataFrame([
-        {"Timestamp": "10:42:15 AM", "Company": "Tata AIG", "Files Processed": 4, "Status": "Success", "Export Size": "24 KB"},
-        {"Timestamp": "11:15:02 AM", "Company": "Zurich Kotak", "Files Processed": 2, "Status": "Success", "Export Size": "12 KB"},
-        {"Timestamp": "02:04:30 PM", "Company": "Royal Sundaram", "Files Processed": 8, "Status": "Success", "Export Size": "48 KB"},
+        {
+            "Timestamp": "10:42:15 AM", 
+            "Company": "Tata AIG", 
+            "Files Processed": 4, 
+            "Accuracy": 0.98,
+            "Trend": [10, 12, 14, 18],
+            "Status": "Success", 
+            "Action": "https://example.com/download/tata"
+        },
+        {
+            "Timestamp": "11:15:02 AM", 
+            "Company": "Zurich Kotak", 
+            "Files Processed": 2, 
+            "Accuracy": 0.85,
+            "Trend": [5, 6, 4, 8],
+            "Status": "Warning", 
+            "Action": "https://example.com/download/kotak"
+        },
+        {
+            "Timestamp": "02:04:30 PM", 
+            "Company": "Royal Sundaram", 
+            "Files Processed": 8, 
+            "Accuracy": 1.00,
+            "Trend": [8, 15, 22, 30],
+            "Status": "Success", 
+            "Action": "https://example.com/download/royal"
+        },
     ])
-    
-    st.dataframe(sample_data, use_container_width=True)
+
+    st.dataframe(
+        sample_data,
+        column_config={
+            "Company": st.column_config.TextColumn("Provider"),
+            "Accuracy": st.column_config.ProgressColumn("Confidence Score", format="%.0f%%", min_value=0, max_value=1),
+            "Trend": st.column_config.LineChartColumn("Volume Trend"),
+            "Action": st.column_config.LinkColumn("Report Link", display_text="Download Excel"),
+            "Status": st.column_config.SelectboxColumn("Status", options=["Success", "Warning", "Failed"])
+        },
+        use_container_width=True,
+        hide_index=True
+    )
