@@ -357,15 +357,72 @@ with tab_schema:
                 unsafe_allow_html=True
             )
 
-# --- TAB 3: Batch Audit Logs ---
+# --- TAB 3: Enhanced Batch Audit Logs ---
 with tab_audit:
-    st.subheader("Session Activity Log")
-    st.caption("Audit record of parsed batches in this session.")
+    st.subheader("Session Activity & Audit Log")
+    st.caption("Track accuracy metrics, processing trends, and exported reports across executed extraction batches.")
     
     sample_data = pd.DataFrame([
-        {"Timestamp": "10:42:15 AM", "Company": "Tata AIG", "Files Processed": 4, "Status": "Success", "Export Size": "24 KB"},
-        {"Timestamp": "11:15:02 AM", "Company": "Zurich Kotak", "Files Processed": 2, "Status": "Success", "Export Size": "12 KB"},
-        {"Timestamp": "02:04:30 PM", "Company": "Royal Sundaram", "Files Processed": 8, "Status": "Success", "Export Size": "48 KB"},
+        {
+            "Timestamp": "10:42:15 AM", 
+            "Company": "Tata AIG", 
+            "Files Processed": 4, 
+            "Accuracy": 0.98,
+            "Trend": [10, 12, 14, 18],
+            "Status": "Success", 
+            "Export Size": "24 KB",
+            "Action": "https://example.com/download/tata"
+        },
+        {
+            "Timestamp": "11:15:02 AM", 
+            "Company": "Zurich Kotak", 
+            "Files Processed": 2, 
+            "Accuracy": 0.85,
+            "Trend": [5, 6, 4, 8],
+            "Status": "Warning", 
+            "Export Size": "12 KB",
+            "Action": "https://example.com/download/kotak"
+        },
+        {
+            "Timestamp": "02:04:30 PM", 
+            "Company": "Royal Sundaram", 
+            "Files Processed": 8, 
+            "Accuracy": 1.00,
+            "Trend": [8, 15, 22, 30],
+            "Status": "Success", 
+            "Export Size": "48 KB",
+            "Action": "https://example.com/download/royal"
+        },
     ])
-    
-    st.dataframe(sample_data, use_container_width=True)
+
+    st.dataframe(
+        sample_data,
+        column_config={
+            "Company": st.column_config.TextColumn(
+                "Insurance Provider",
+                help="Engine profile used for the batch"
+            ),
+            "Accuracy": st.column_config.ProgressColumn(
+                "Confidence Score",
+                help="Field extraction confidence rate",
+                format="%.0f%%",
+                min_value=0,
+                max_value=1,
+            ),
+            "Trend": st.column_config.LineChartColumn(
+                "Processing Volume",
+                help="Parsing throughput trend over time"
+            ),
+            "Action": st.column_config.LinkColumn(
+                "Report Link",
+                display_text="Download Excel"
+            ),
+            "Status": st.column_config.SelectboxColumn(
+                "Execution Status",
+                options=["Success", "Warning", "Failed"],
+                required=True
+            )
+        },
+        use_container_width=True,
+        hide_index=True
+    )
