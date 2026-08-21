@@ -1,53 +1,70 @@
 import streamlit as st
-import os
+import pandas as pd
+import numpy as np
 
-# --- Streamlit Page Config (only once) ---
-st.set_page_config(page_title="📄 Multi-Company Policy Extractor", layout="centered")
+# Sample Data
+sample_data = pd.DataFrame([
+    {
+        "Timestamp": "10:42:15 AM", 
+        "Company": "Tata AIG", 
+        "Files Processed": 4, 
+        "Accuracy": 0.98,
+        "Trend": [10, 12, 14, 18],
+        "Status": "Success", 
+        "Export Size": "24 KB",
+        "Action": "https://example.com/download/tata"
+    },
+    {
+        "Timestamp": "11:15:02 AM", 
+        "Company": "Zurich Kotak", 
+        "Files Processed": 2, 
+        "Accuracy": 0.85,
+        "Trend": [5, 6, 4, 8],
+        "Status": "Warning", 
+        "Export Size": "12 KB",
+        "Action": "https://example.com/download/kotak"
+    },
+    {
+        "Timestamp": "02:04:30 PM", 
+        "Company": "Royal Sundaram", 
+        "Files Processed": 8, 
+        "Accuracy": 1.00,
+        "Trend": [8, 15, 22, 30],
+        "Status": "Success", 
+        "Export Size": "48 KB",
+        "Action": "https://example.com/download/royal"
+    },
+])
 
-st.title("📄 Multi-Company Policy Extractor → Excel")
-st.write("Extract policy details from PDFs for **Tata AIG**, **Royal Sundaram**, **Reliance**, **Zurich Kotak**, and **National** and export them to Excel format.")
-
-# --- Sidebar: Company Selector ---
-st.sidebar.header("🏢 Choose Insurance Company")
-company = st.sidebar.selectbox(
-    "Select the Company",
-    ["Tata AIG", "Royal Sundaram", "Zurich Kotak","National"]
+# Advanced Table Configuration
+st.dataframe(
+    sample_data,
+    column_config={
+        "Company": st.column_config.TextColumn(
+            "Insurance Company",
+            help="Configured processing engine profile"
+        ),
+        "Accuracy": st.column_config.ProgressColumn(
+            "Confidence Score",
+            help="Extraction confidence level",
+            format="%.0f%%",
+            min_value=0,
+            max_value=1,
+        ),
+        "Trend": st.column_config.LineChartColumn(
+            "Volume Trend",
+            help="Recent file processing velocity"
+        ),
+        "Action": st.column_config.LinkColumn(
+            "Report Link",
+            display_text="Download Excel"
+        ),
+        "Status": st.column_config.SelectboxColumn(
+            "Execution Status",
+            options=["Success", "Warning", "Failed"],
+            required=True
+        )
+    },
+    use_container_width=True,
+    hide_index=True
 )
-
-# --- Map Company to Script File ---
-company_scripts = {
-    "Tata AIG": "tata.py",
-    "Royal Sundaram": "royal.py",
-    "Zurich Kotak": "kotak.py",
-    "National": "national.py"
-}
-
-selected_script = company_scripts[company]
-
-st.sidebar.markdown("---")
-st.sidebar.info(f"👆 Selected: {company}")
-
-# --- Load and Display ---
-st.markdown("---")
-
-if os.path.exists(selected_script):
-    st.success(f"Running extractor for **{company}**")
-    # Read the file content
-    with open(selected_script, "r", encoding="utf-8") as f:
-        code = f.read()
-
-    # Remove duplicate Streamlit config lines to avoid set_page_config() error
-    cleaned_lines = []
-    for line in code.splitlines():
-        if "st.set_page_config" in line:
-            continue
-        cleaned_lines.append(line)
-    cleaned_code = "\n".join(cleaned_lines)
-
-    # Execute safely inside this Streamlit session
-    try:
-        exec(cleaned_code, globals())
-    except Exception as e:
-        st.error(f"❌ Error while running {company} extractor: {e}")
-else:
-    st.error(f"Extractor file not found: {selected_script}")
