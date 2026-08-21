@@ -221,6 +221,3 @@ st.markdown(
 
 
 st.markdown("---")
-
-# --- Engine Dispatcher Call ---
-run_extractor_engine(selected_cfg["script"], uploaded_files)
