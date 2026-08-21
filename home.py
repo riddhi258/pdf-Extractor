@@ -1,8 +1,3 @@
-Here is the simplified code. The hero banner, redundant badges, and explicit file uploader call have been removed from the main page script.
-
-The layout now directly invokes `run_extractor_engine()`, leaving execution entirely to your designated module script (e.g., `tata.py`):
-
-```python
 import streamlit as st
 import os
 import importlib.util
@@ -165,4 +160,3 @@ with st.sidebar:
 # --- Main Extractor Call ---
 run_extractor_engine(selected_cfg["script"])
 
-```
