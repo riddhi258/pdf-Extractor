@@ -1,3 +1,11 @@
+The provided snippet has two operational errors:
+
+1. **Undefined Variable:** `files` is referenced in the status `div` before any file uploader defines `uploaded_files`.
+2. **Missing Uploader Widget:** The `st.file_uploader` control was missing from the main body layout.
+
+Here is the clean, fixed script with the file uploader restored and the status card bound directly to `uploaded_files`:
+
+```python
 import streamlit as st
 import os
 import importlib.util
@@ -167,17 +175,7 @@ def run_extractor_engine(script_path: str, files: list):
     except Exception as e:
         st.error(f"❌ Execution Exception inside `{script_path}`:")
         st.exception(e)
-# --- Status Div in Main Layout ---
-file_count = len(files) if files else 0
-st.markdown(
-    f"""
-    <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 18px; border-radius: 12px; margin-top: 16px; margin-bottom: 20px;">
-        <div style="font-size: 0.85rem; color: #64748B;">Queued Files: <strong style="color: #0F172A;">{file_count} PDF(s)</strong></div>
-        <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px;">Engine Status: <strong style="color: #059669;">Ready for execution</strong></div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+
 # --- Sidebar Component ---
 with st.sidebar:
     st.markdown("### ✨ InsurData AI")
@@ -229,7 +227,29 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# --- Primary File Uploader ---
+uploaded_files = st.file_uploader(
+    f"Select or drop {company} PDFs here",
+    type=["pdf"],
+    accept_multiple_files=True,
+    help="Upload native digital PDF policy documents."
+)
+
+# --- Status Div in Main Layout ---
+file_count = len(uploaded_files) if uploaded_files else 0
+st.markdown(
+    f"""
+    <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 18px; border-radius: 12px; margin-top: 16px; margin-bottom: 20px;">
+        <div style="font-size: 0.85rem; color: #64748B;">Queued Files: <strong style="color: #0F172A;">{file_count} PDF(s)</strong></div>
+        <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px;">Engine Status: <strong style="color: #059669;">Ready for execution</strong></div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 st.markdown("---")
 
 # --- Engine Dispatcher Call ---
 run_extractor_engine(selected_cfg["script"], uploaded_files)
+
+```
