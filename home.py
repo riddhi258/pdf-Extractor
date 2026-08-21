@@ -271,28 +271,28 @@ with tab_console:
         
     st.markdown("---")
 
-    # Safe Module Execution
-    script_path = selected_cfg["script"]
+    # # Safe Module Execution
+    # script_path = selected_cfg["script"]
 
-    if os.path.exists(script_path):
-        try:
-            spec = importlib.util.spec_from_file_location("company_module", script_path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+    # if os.path.exists(script_path):
+    #     try:
+    #         spec = importlib.util.spec_from_file_location("company_module", script_path)
+    #         module = importlib.util.module_from_spec(spec)
+    #         spec.loader.exec_module(module)
 
-            # Execution call
-            if hasattr(module, "main"):
-                module.main(uploaded_files)
-            elif hasattr(module, "extract"):
-                module.extract(uploaded_files)
-            else:
-                st.info(f"ℹ️ Engine `{script_path}` ready. Ensure it contains a `main(uploaded_files)` function.")
+    #         # Execution call
+    #         if hasattr(module, "main"):
+    #             module.main(uploaded_files)
+    #         elif hasattr(module, "extract"):
+    #             module.extract(uploaded_files)
+    #         else:
+    #             st.info(f"ℹ️ Engine `{script_path}` ready. Ensure it contains a `main(uploaded_files)` function.")
 
-        except Exception as e:
-            st.error(f"❌ Execution error inside `{script_path}`:")
-            st.exception(e)
-    else:
-        st.warning(f"⚠️ Missing script file: `{script_path}` not found in root directory.")
+    #     except Exception as e:
+    #         st.error(f"❌ Execution error inside `{script_path}`:")
+    #         st.exception(e)
+    # else:
+    #     st.warning(f"⚠️ Missing script file: `{script_path}` not found in root directory.")
 
 # --- TAB 2: Schema Inspector ---
 with tab_schema:
