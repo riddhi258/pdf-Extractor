@@ -407,7 +407,7 @@ def extract_policy_details(text, file_name):
 
     if vehicle_match:
         vehicle_info = vehicle_match.group(1).strip()
-
+ 
     # Clean vehicle info
     if vehicle_info != "N/A":
         vehicle_info = re.sub(r"\s+", " ", vehicle_info)
